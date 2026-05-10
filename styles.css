@@ -1796,10 +1796,16 @@ body {
 
   .app-shell {
     display: grid;
-    grid-template-columns: 1fr minmax(300px, 340px);
+    grid-template-columns: minmax(0, 680px);
+    justify-content: center;
     gap: 22px;
     align-items: start;
     max-width: 1080px;
+  }
+
+  .app-shell.has-result {
+    grid-template-columns: 1fr minmax(300px, 340px);
+    justify-content: initial;
   }
 
   .app-header {

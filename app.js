@@ -2129,17 +2129,20 @@ ensureSauce1SwipeAction()
 
 function updateResultVisibility(){
   const resultEl = document.getElementById("result")
+  const shell = document.querySelector(".app-shell")
 
   if(!resultEnabled){
     resultEl.style.opacity = "0"
     resultEl.style.visibility = "hidden"
     resultEl.style.pointerEvents = "none"
+    shell?.classList.remove("has-result")
     return
   }
 
   resultEl.style.opacity = "1"
   resultEl.style.visibility = "visible"
   resultEl.style.pointerEvents = "auto"
+  shell?.classList.add("has-result")
 }
 
 
