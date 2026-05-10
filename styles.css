@@ -1796,14 +1796,14 @@ body {
 
   .app-shell {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: minmax(560px, 680px) minmax(300px, 340px);
     gap: 22px;
     align-items: start;
+    max-width: 1080px;
   }
 
-  .app-header,
-  .builder-panel {
-    grid-column: 1;
+  .app-header {
+    grid-column: 1 / -1;
   }
 
   .app-header {
@@ -1828,13 +1828,9 @@ body {
   }
 
   .builder-panel {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .option-section-main,
-  .footer-detail,
-  .option-section:nth-of-type(3) {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
   }
 
   .result {
@@ -1844,10 +1840,10 @@ body {
     right: auto;
     bottom: auto;
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 2;
     width: 100%;
     min-height: 148px;
-    margin-top: 4px;
+    margin-top: 0;
     padding: 18px;
   }
 
