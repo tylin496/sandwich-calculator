@@ -2074,7 +2074,9 @@ if(sauce1 && sauce2Visible && sauce2){
 }
 
 const selectedSauceCount = (sauce1 ? 1 : 0) + (sauce2 ? 1 : 0)
-const summaryText = `主餐 1 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`
+const isDoubleMeat = document.getElementById("double").checked
+const mainPortions = isDoubleMeat ? 2 : 1
+const summaryText = `主餐 ${mainPortions} 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`
 showResultStats(summaryText, breakdown.join("<br>"))
 const mainChanged = main !== lastMainForFeedback
 
@@ -2083,7 +2085,6 @@ if(sauce1) sauceShareText.push(getSauceDisplayText(sauce1))
 if(sauce2) sauceShareText.push(getSauceDisplayText(sauce2))
 if(!sauceShareText.length) sauceShareText.push("不加醬 No sauce")
 
-const isDoubleMeat = document.getElementById("double").checked
 const zhMainBase = `6吋${main}${isDoubleMeat ? "雙份肉" : ""}`
 const zhAddon = selectedAddonNames.map(compactZhShareName).join(" + ")
 const zhMainWithAddon = zhAddon ? `${zhMainBase} + ${zhAddon}` : zhMainBase
