@@ -1800,18 +1800,6 @@ body {
     margin: 0 auto;
   }
 
-  .app-shell.has-result {
-    display: grid;
-    grid-template-columns: 1fr minmax(300px, 340px);
-    gap: 22px;
-    align-items: start;
-    max-width: 1080px;
-  }
-
-  .app-shell.has-result .app-header {
-    grid-column: 1 / -1;
-  }
-
   .app-header {
     margin-bottom: 4px;
     padding-right: 0;
@@ -1834,22 +1822,14 @@ body {
   }
 
   .builder-panel {
-    grid-column: 1;
-    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
 
   .result {
-    position: sticky;
-    top: 28px;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    grid-column: 2;
-    grid-row: 2;
+    position: static;
     width: 100%;
     min-height: 148px;
-    margin-top: 0;
+    margin-top: 16px;
     padding: 18px;
   }
 
