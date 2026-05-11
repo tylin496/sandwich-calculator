@@ -1481,7 +1481,7 @@ function createAddonSelect(removable = true){
   wrapper.style.display = "block"
   wrapper.style.marginTop = "8px"
   wrapper.style.position = "relative"
-  wrapper.style.overflow = "visible"
+  wrapper.style.overflow = "hidden"
 
   const display = document.createElement("div")
   display.className = "picker-field picker-field-fill picker-field--placeholder"

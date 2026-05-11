@@ -320,10 +320,13 @@ button:active {
 }
 
 button:focus-visible,
-.picker-field:focus-visible,
-.modal-search-input:focus-visible {
+.picker-field:focus-visible {
   outline: 3px solid rgba(52,199,89,0.38);
   outline-offset: 3px;
+}
+
+.modal-search-input:focus-visible {
+  outline: none;
 }
 
 select:focus {
@@ -705,11 +708,16 @@ select:focus-visible {
 
 .swipe-row {
   position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  isolation: isolate;
 }
 
 .swipe-row .picker-field {
   transition: transform 0.2s ease;
   touch-action: pan-y;
+  position: relative;
+  z-index: 2;
 }
 
 .swipe-row.swipe-dragging .picker-field {
@@ -725,12 +733,12 @@ body.swipe-dragging {
 .swipe-clear-btn {
   position: absolute;
   right: 0;
-  top: 4px;
-  bottom: 4px;
+  top: 0;
+  bottom: 0;
   transform: translateX(-10px);
   width: 56px;
   height: auto;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.44);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(230,236,245,0.18) 100%),
@@ -745,7 +753,7 @@ body.swipe-dragging {
   pointer-events: none;
   transition: opacity 0.18s ease, width 0.08s ease, padding-left 0.14s ease,
               background 0.16s ease, border-radius 0.14s ease;
-  z-index: 2;
+  z-index: 1;
   overflow: hidden;
   white-space: nowrap;
   display: inline-flex;
@@ -837,8 +845,6 @@ body.swipe-dragging {
 #addonList .addon-row .picker-field {
   margin-top: 0;
   font-weight: 400;
-  position: relative;
-  z-index: 1;
 }
 
 .footer-detail {
@@ -1743,7 +1749,7 @@ body.has-result {
 }
 
 .swipe-clear-btn {
-  border-radius: 16px;
+  border-radius: 14px;
 }
 
 .footer-detail-static {
