@@ -652,6 +652,23 @@ select:focus-visible {
   }
 }
 
+/* Peek animation: hint at swipe-to-delete on first item */
+@keyframes swipePeek {
+  0%   { transform: translateX(0); }
+  18%  { transform: translateX(-62px); }
+  62%  { transform: translateX(-62px); }
+  82%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+.swipe-row.peek-hint .picker-field {
+  animation: swipePeek 0.9s cubic-bezier(.36,.07,.19,.97) 0.55s both;
+  pointer-events: none;
+}
+.swipe-row.peek-hint .swipe-clear-btn {
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
 .picker-row-with-minus.removing,
 .swipe-row.removing {
   pointer-events: none;

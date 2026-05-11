@@ -440,6 +440,21 @@ function animateRowEnter(el){
   setTimeout(()=> el.classList.remove("row-enter"), 300)
 }
 
+function maybePeekHint(row, type){
+  // Only on touch devices, only once per type
+  if(isDesktopHoverMode()) return
+  if(hasSeenSwipeHint(type)) return
+  // Trigger peek after row enter animation settles
+  setTimeout(() => {
+    row.classList.add("peek-hint")
+    setTimeout(() => {
+      row.classList.remove("peek-hint")
+      markSwipeHintSeen(type)
+      updateSwipeHints()
+    }, 1600)
+  }, 320)
+}
+
 function styleModalCategoryButton(btn, active){
   const dark = isDarkMode()
   btn.style.padding = "8px 12px"
@@ -1313,6 +1328,7 @@ function renderQuickSearchItems(){
             sauce2Row = createSauceSelect()
             list.appendChild(sauce2Row)
             animateRowEnter(sauce2Row)
+            maybePeekHint(sauce2Row, "sauce")
           }
           const hidden = sauce2Row ? sauce2Row.querySelector('input[data-role="sauce-value"]') : null
           if(hidden) hidden.value = name
@@ -1477,6 +1493,9 @@ function addAddon(defaultValue = ""){
   updateAddonRowSpacing()
   animateRowEnter(wrapper)
   flashPickerSelection(wrapper.querySelector(".picker-field"))
+  // First addon ever — show peek hint so user discovers swipe-to-delete
+  const addonRows = document.querySelectorAll("#addonList .addon-row")
+  if(addonRows.length === 1) maybePeekHint(wrapper, "addon")
   updateAddonUI()
   calc()
   return true
