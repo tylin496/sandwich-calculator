@@ -1675,8 +1675,9 @@ body {
   margin-right: 6px;
   color: var(--ios-green-btn);
   font-size: 20px;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1;
+  text-shadow: 0 0 8px rgba(52,199,89,0.7), 0 0 18px rgba(52,199,89,0.35);
 }
 
 .picker-field--bilingual-break::before,
@@ -1910,8 +1911,8 @@ body {
   }
 
   .picker-field--plus::before {
-    background: rgba(95,211,125,0.15);
-    color: #73d892;
+    color: #5eda80;
+    text-shadow: 0 0 8px rgba(94,218,128,0.75), 0 0 20px rgba(94,218,128,0.38);
   }
 
   .sheet-modal {
