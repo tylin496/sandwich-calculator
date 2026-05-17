@@ -264,6 +264,25 @@ function getPer100KcalText(protein, cal){
   return `${((protein / cal) * 100).toFixed(1)}g/100kcal`
 }
 
+/** Modal list meta: kcal, then protein, then g/100kcal efficiency. */
+function formatModalNutritionMetaHtml(cal, protein){
+  const lines = [`${formatKcal(cal)} kcal`]
+  if(protein != null && !Number.isNaN(protein)){
+    lines.push(`<span class="item-protein">${formatProtein(protein)} g</span>`)
+    const efficiency = getPer100KcalText(protein, cal)
+    if(efficiency) lines.push(`<span class="item-efficiency">${efficiency}</span>`)
+  }
+  return lines.join("<br>")
+}
+
+function formatBreakdownNutritionLine(label, item){
+  const parts = [`${formatKcal(item.cal)} kcal`]
+  if(item.protein != null && !Number.isNaN(item.protein)){
+    parts.push(`${formatProtein(item.protein)} g`)
+  }
+  return `${label}: ${parts.join(" · ")}`
+}
+
 function setBilingualModalTitle(el, zh, en){
   if(!el) return
   if(!en){
@@ -906,9 +925,8 @@ function renderMainItems(group){
     setBilingualModalTitle(textWrap, name, en)
     textWrap.style.paddingRight = "10px"
 
-    const efficiency = ((data.main[name].protein / data.main[name].cal) * 100).toFixed(1)
     const rightWrap = createModalMetaWrap(
-      `${data.main[name].cal} kcal<br><span class="item-efficiency">${efficiency}g/100kcal</span>`,
+      formatModalNutritionMetaHtml(data.main[name].cal, data.main[name].protein),
       { showCheck: name === selectedMain, html: true, hasEfficiency: true }
     )
 
@@ -1118,9 +1136,8 @@ function renderAddonItems(group){
     setBilingualModalTitle(textWrap, name, en)
     textWrap.style.paddingRight = "10px"
 
-    const efficiency = getPer100KcalText(data.addon[name].protein, data.addon[name].cal)
     const rightWrap = createModalMetaWrap(
-      `${data.addon[name].cal} kcal<br><span class="item-efficiency">${efficiency}</span>`,
+      formatModalNutritionMetaHtml(data.addon[name].cal, data.addon[name].protein),
       {
         showCheck: selected.has(name) || (!!editingCurrentValue && name === editingCurrentValue),
         html: true,
@@ -1278,9 +1295,10 @@ function renderQuickSearchItems(){
     setBilingualModalTitle(left, name, en)
     left.style.paddingRight = "10px"
 
-    const rightWrap = createModalMetaWrap(`${data.main[name].cal} kcal`, {
-      showCheck: name === selectedMain
-    })
+    const rightWrap = createModalMetaWrap(
+      formatModalNutritionMetaHtml(data.main[name].cal, data.main[name].protein),
+      { showCheck: name === selectedMain, html: true, hasEfficiency: true }
+    )
 
     if(name === selectedMain){
       row.style.opacity = "0.45"
@@ -1319,9 +1337,8 @@ function renderQuickSearchItems(){
     setBilingualModalTitle(left, name, en)
     left.style.paddingRight = "10px"
 
-    const efficiency = getPer100KcalText(data.addon[name].protein, data.addon[name].cal)
     const rightWrap = createModalMetaWrap(
-      `${data.addon[name].cal} kcal<br><span class="item-efficiency">${efficiency}</span>`,
+      formatModalNutritionMetaHtml(data.addon[name].cal, data.addon[name].protein),
       {
         showCheck: selectedAddon.has(name),
         html: true,
@@ -2104,7 +2121,7 @@ if(!main){
 if(main && data.main[main]){
   total.cal += data.main[main].cal
   total.protein += data.main[main].protein
-  breakdown.push(`${main}: ${data.main[main].cal} kcal`)
+  breakdown.push(formatBreakdownNutritionLine(main, data.main[main]))
 }
 
 if(document.getElementById("double").checked && main){
@@ -2113,7 +2130,7 @@ if(document.getElementById("double").checked && main){
   if(doubleMeatData){
     total.cal += doubleMeatData.cal
     total.protein += doubleMeatData.protein
-    breakdown.push(`雙份肉 ${main}: ${doubleMeatData.cal} kcal`)
+    breakdown.push(formatBreakdownNutritionLine(`雙份肉 ${main}`, doubleMeatData))
   }
 }
 
@@ -2127,7 +2144,7 @@ addonRows.forEach(row=>{
     selectedAddonNames.push(name)
     total.cal += data.addon[name].cal
     total.protein += data.addon[name].protein
-    breakdown.push(`${name}: ${data.addon[name].cal} kcal`)
+    breakdown.push(formatBreakdownNutritionLine(name, data.addon[name]))
   }
 })
 
@@ -2150,7 +2167,11 @@ if(sauce1 && sauce2Visible && sauce2){
 const selectedSauceCount = (sauce1 ? 1 : 0) + (sauce2 ? 1 : 0)
 const isDoubleMeat = document.getElementById("double").checked
 const mainPortions = isDoubleMeat ? 2 : 1
-const summaryText = `主餐 ${mainPortions} 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`
+const totalEfficiency = getPer100KcalText(total.protein, total.cal)
+const summaryText = [
+  `主餐 ${mainPortions} 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`,
+  `${formatKcal(total.cal)} kcal · ${formatProtein(total.protein)} g${totalEfficiency ? ` · ${totalEfficiency}` : ""}`,
+].join(" · ")
 showResultStats(summaryText, breakdown.join("<br>"))
 const mainChanged = main !== lastMainForFeedback
 
@@ -2175,7 +2196,9 @@ const enSauce = sauce1
   ? [sauce1, sauce2].filter(Boolean).map(name => sauceNameMap[name] || name).join(" + ")
   : "No sauce"
 
-const metricLine = `${formatKcal(total.cal)} kcal | ${formatProtein(total.protein)} g`
+const metricLine = totalEfficiency
+  ? `${formatKcal(total.cal)} kcal | ${formatProtein(total.protein)} g | ${totalEfficiency}`
+  : `${formatKcal(total.cal)} kcal | ${formatProtein(total.protein)} g`
 const zhShareLine = `${zhMainWithAddon} | ${zhSauce}`
 const enShareLine = `${enMainWithAddon} | ${enSauce}`
 

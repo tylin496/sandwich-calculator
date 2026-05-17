@@ -491,9 +491,16 @@ select:focus-visible {
   margin-top: 2px;
 }
 
+.item-protein {
+  font-size: 11px;
+  color: var(--kcal-muted);
+  display: block;
+}
+
 .item-efficiency {
   font-size: 11px;
   color: var(--kcal-muted);
+  display: block;
 }
 
 .modal-recent-hint {
@@ -1068,7 +1075,7 @@ button:active {
 }
 
 .modal-item-meta-wrap--efficiency {
-  min-width: 108px;
+  min-width: 112px;
 }
 
 .modal-item-kcal {
@@ -1080,7 +1087,8 @@ button:active {
 }
 
 .modal-item-kcal--efficiency {
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .copy-toast {
