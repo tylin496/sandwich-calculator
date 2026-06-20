@@ -485,6 +485,38 @@ select:focus-visible {
   color: rgba(98,104,116,0.9);
 }
 
+.modal-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.modal-clear-btn {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: #8a93a6;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal-clear-btn:active {
+  opacity: 0.55;
+}
+
+.history-item-extras {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #8a93a6;
+  font-weight: 400;
+}
+
 .modal-en-inline {
   color: inherit;
   margin-left: 4px;
@@ -1169,6 +1201,40 @@ button:active {
 
 .result-copy-btn.copied .copy-icon-check {
   animation: copyCheckIn 0.48s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}
+
+.result-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-save-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.result-save-shape {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease;
+}
+
+.result-save-btn.saved {
+  color: #34C759;
+}
+
+.result-save-btn.saved .result-save-shape {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.result-save-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .result-summary-row {
@@ -2141,18 +2207,16 @@ body.has-result {
   border-radius: 14px;
 }
 
+/* Desktop mirrors the mobile layout: a phone-width column centered on screen,
+   with the result bar and sheets aligned to that same column. */
 @media (min-width: 940px) {
   body {
     padding: 28px 24px 54px;
   }
 
-  body.has-result {
-    padding-bottom: 180px;
-  }
-
   .app-shell {
     display: block;
-    max-width: 720px;
+    max-width: 480px;
     margin: 0 auto;
   }
 
@@ -2160,42 +2224,15 @@ body.has-result {
     margin-bottom: var(--space-1);
   }
 
-  .logo {
-    font-size: 42px;
-  }
-
-  .logo .title-sub {
-    font-size: 18px;
-    margin-left: 8px;
-  }
-
-  .icon-symbol-btn,
-  .reset-btn,
-  .result-copy-btn {
-    width: 44px;
-    height: 44px;
-  }
-
-  .icon-symbol-btn__icon,
-  .reset-btn__icon {
-    width: 16px;
-    height: 16px;
-  }
-
   .builder-panel {
     gap: var(--space-4);
   }
 
   .result {
-    position: fixed;
     left: 0;
     right: 0;
-    bottom: 24px;
-    width: min(680px, calc(100vw - 48px));
+    width: min(480px, calc(100vw - 40px));
     margin: 0 auto;
-    padding: 18px 22px;
-    border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
   }
 
   .sheet-modal:not(.is-open) .sheet-panel {
@@ -2209,12 +2246,9 @@ body.has-result {
   .sheet-panel {
     left: 50%;
     right: auto;
-    width: min(80vw, calc(100vw - 32px));
-    height: 80vh;
-    height: 80dvh;
-    max-height: 80vh;
-    max-height: 80dvh;
-    border-radius: 24px 24px 0 0;
+    width: min(480px, calc(100vw - 16px));
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
   }
 }
 

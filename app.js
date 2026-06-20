@@ -136,7 +136,9 @@ const SWIPE_HINT_KEYS = {
   addon: "swipe_hint_seen_addon",
   sauce: "swipe_hint_seen_sauce"
 }
-const MODAL_IDS = ["mainModal", "addonModal", "sauceModal", "quickSearchModal"]
+const MODAL_IDS = ["mainModal", "addonModal", "sauceModal", "quickSearchModal", "historyModal"]
+const HISTORY_KEY = "combo_history"
+const HISTORY_LIMIT = 8
 const MODAL_ANIM_MS = 340
 
 function setModalOpenState(){
@@ -445,6 +447,291 @@ function renderRecentShortcutSection(container, items, getLabel, onPick){
 
 function compactZhShareName(name){
   return String(name || "").replace(/[（(]([^()（）]+)[)）]/g, "$1")
+}
+
+// ---- 歷史紀錄 / Combo history ----------------------------------------------
+
+function getCurrentCombo(){
+  const main = document.getElementById("main").value
+  if(!main || !data.main[main]) return null
+  const double = document.getElementById("double").checked
+  const addons = []
+  document.querySelectorAll('#addonList input[data-role="addon-value"]').forEach(inp=>{
+    if(inp.value && data.addon[inp.value]) addons.push(inp.value)
+  })
+  const sauce1 = document.getElementById("sauce1").value || ""
+  const sauce2Input = document.querySelector('#sauce2List input[data-role="sauce-value"]')
+  const sauce2 = sauce2Input ? (sauce2Input.value || "") : ""
+  return {
+    main,
+    double: !!double,
+    addons,
+    sauce1: data.sauce[sauce1] ? sauce1 : "",
+    sauce2: data.sauce[sauce2] ? sauce2 : "",
+    ts: Date.now()
+  }
+}
+
+function comboSignature(c){
+  return [
+    c.main,
+    c.double ? 1 : 0,
+    [...(c.addons || [])].sort().join(","),
+    [c.sauce1, c.sauce2].filter(Boolean).sort().join(",")
+  ].join("|")
+}
+
+// Whether combo `a` is contained in combo `b` (same main/double, and b has all
+// of a's add-ons and sauces). Used to collapse the build-up of a single combo
+// so the history shows the finished sandwich, not every intermediate step.
+function comboIsSubsetOf(a, b){
+  if(a.main !== b.main || !!a.double !== !!b.double) return false
+  const bAddons = new Set(b.addons || [])
+  if(!(a.addons || []).every(x => bAddons.has(x))) return false
+  const bSauces = new Set([b.sauce1, b.sauce2].filter(Boolean))
+  return [a.sauce1, a.sauce2].filter(Boolean).every(x => bSauces.has(x))
+}
+
+function comboIsValid(c){
+  return c && typeof c === "object" && c.main && data.main[c.main]
+}
+
+function getHistory(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")
+    if(!Array.isArray(parsed)) return []
+    return parsed
+      .filter(comboIsValid)
+      .map(c => ({
+        main: c.main,
+        double: !!c.double,
+        addons: Array.isArray(c.addons) ? c.addons.filter(n => data.addon[n]) : [],
+        sauce1: data.sauce[c.sauce1] ? c.sauce1 : "",
+        sauce2: data.sauce[c.sauce2] ? c.sauce2 : "",
+        ts: Number(c.ts) || 0
+      }))
+      .slice(0, HISTORY_LIMIT)
+  } catch (_) {
+    return []
+  }
+}
+
+function setHistory(list){
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, HISTORY_LIMIT)))
+  } catch (_) {
+    // no-op
+  }
+}
+
+function saveCurrentComboToHistory(){
+  const combo = getCurrentCombo()
+  if(!combo) return false
+  const sig = comboSignature(combo)
+  // Drop the exact same combo and any earlier entry this one is a superset of.
+  const next = [combo, ...getHistory().filter(h =>
+    comboSignature(h) !== sig && !comboIsSubsetOf(h, combo)
+  )]
+  setHistory(next)
+  updateHistoryButton()
+  return true
+}
+
+function isCurrentComboSaved(){
+  const combo = getCurrentCombo()
+  if(!combo) return false
+  const sig = comboSignature(combo)
+  return getHistory().some(h => comboSignature(h) === sig)
+}
+
+function updateSaveButtonState(){
+  const btn = document.getElementById("saveComboBtn")
+  if(!btn) return
+  const hasCombo = !!getCurrentCombo()
+  btn.disabled = !hasCombo
+  const saved = hasCombo && isCurrentComboSaved()
+  btn.classList.toggle("saved", saved)
+  const label = saved ? "已儲存 Saved" : "儲存組合 Save"
+  btn.setAttribute("aria-label", label)
+  btn.setAttribute("title", label)
+}
+
+function saveCurrentComboFromResult(){
+  if(isCurrentComboSaved()){
+    openHistory()
+    return
+  }
+  if(saveCurrentComboToHistory()){
+    haptic()
+    updateSaveButtonState()
+    showCopyToast("已加入紀錄 Saved")
+  }
+}
+
+function computeComboNutrition(combo){
+  let cal = 0, protein = 0
+  if(combo.main && data.main[combo.main]){
+    cal += data.main[combo.main].cal
+    protein += data.main[combo.main].protein
+  }
+  if(combo.double && combo.main){
+    const key = doubleMeatMap[combo.main] || combo.main
+    if(data.addon[key]){
+      cal += data.addon[key].cal
+      protein += data.addon[key].protein
+    }
+  }
+  (combo.addons || []).forEach(name=>{
+    if(data.addon[name]){
+      cal += data.addon[name].cal
+      protein += data.addon[name].protein
+    }
+  })
+  const s1 = combo.sauce1, s2 = combo.sauce2
+  if(s1 && data.sauce[s1] && s2 && data.sauce[s2]){
+    cal += data.sauce[s1].cal / 2 + data.sauce[s2].cal / 2
+  } else if(s1 && data.sauce[s1]){
+    cal += data.sauce[s1].cal
+  }
+  return { cal, protein }
+}
+
+function comboZhTitle(combo){
+  return `6吋${combo.main}${combo.double ? " 雙份肉" : ""}`
+}
+
+function comboEnTitle(combo){
+  const en = mainNameMap[combo.main] || combo.main
+  return `6" ${en}${combo.double ? " double meat" : ""}`
+}
+
+function comboExtrasText(combo){
+  const parts = []
+  const addons = (combo.addons || []).map(compactZhShareName)
+  if(addons.length) parts.push(addons.join(" + "))
+  const sauces = [combo.sauce1, combo.sauce2].filter(Boolean)
+  parts.push(sauces.length ? sauces.join(" + ") : "不加醬")
+  return parts.join("｜")
+}
+
+function applyCombo(combo){
+  if(!comboIsValid(combo)) return
+
+  const mainSelect = document.getElementById("main")
+  mainSelect.value = combo.main
+  updateMainPickerLabel()
+
+  document.getElementById("double").checked = !!combo.double
+
+  const addonList = document.getElementById("addonList")
+  addonList.innerHTML = ""
+  ;(combo.addons || []).forEach(name=>{
+    if(!data.addon[name] || isAddonDuplicate(name)) return
+    const wrapper = createAddonSelect(true)
+    setAddonValue(wrapper, name)
+    addonList.appendChild(wrapper)
+  })
+  updateAddonUI()
+
+  const sauce1 = document.getElementById("sauce1")
+  sauce1.value = data.sauce[combo.sauce1] ? combo.sauce1 : ""
+  updateSaucePickerLabel("sauce1")
+
+  const sauce2List = document.getElementById("sauce2List")
+  sauce2List.innerHTML = ""
+  if(sauce1.value && combo.sauce2 && data.sauce[combo.sauce2]){
+    const row = createSauceSelect()
+    sauce2List.appendChild(row)
+    const hidden = row.querySelector('input[data-role="sauce-value"]')
+    if(hidden) hidden.value = combo.sauce2
+    updateSaucePickerLabel("sauce2")
+  }
+  updateSauce2Visibility()
+
+  refreshSwipeValueFlags()
+  updateSectionClearButtons()
+  calc()
+}
+
+function updateHistoryButton(){
+  const btn = document.getElementById("historyBtn")
+  if(!btn) return
+  btn.style.display = getHistory().length ? "" : "none"
+}
+
+function openHistory(){
+  const modal = document.getElementById("historyModal")
+  if(!modal) return
+  renderHistoryItems()
+  openModal("historyModal")
+  modal.onclick = (e)=>{
+    if(e.target.id === "historyModal") closeModal("historyModal")
+  }
+}
+
+function clearHistory(){
+  setHistory([])
+  updateHistoryButton()
+  renderHistoryItems()
+  closeModal("historyModal")
+}
+
+function renderHistoryItems(){
+  const itemsEl = document.getElementById("historyItems")
+  const clearBtn = document.getElementById("historyClearBtn")
+  if(!itemsEl) return
+  itemsEl.innerHTML = ""
+
+  const history = getHistory()
+  if(clearBtn) clearBtn.style.display = history.length ? "" : "none"
+
+  if(!history.length){
+    const empty = document.createElement("div")
+    empty.style.padding = "14px 12px"
+    empty.style.fontSize = "13px"
+    empty.style.color = "#8e8e93"
+    empty.textContent = "尚無紀錄 No history yet"
+    itemsEl.appendChild(empty)
+    return
+  }
+
+  const currentSig = (()=>{ const c = getCurrentCombo(); return c ? comboSignature(c) : "" })()
+
+  history.forEach(combo=>{
+    const div = document.createElement("div")
+    div.style.padding = "12px"
+    div.style.borderBottom = "1px solid #eee"
+    div.style.cursor = "pointer"
+    div.style.display = "flex"
+    div.style.justifyContent = "space-between"
+    div.style.alignItems = "center"
+
+    const textWrap = document.createElement("div")
+    textWrap.className = "modal-item-title"
+    textWrap.style.paddingRight = "10px"
+    setBilingualModalTitle(textWrap, comboZhTitle(combo), comboEnTitle(combo))
+
+    const extras = document.createElement("div")
+    extras.className = "history-item-extras"
+    extras.textContent = comboExtrasText(combo)
+    textWrap.appendChild(extras)
+
+    const { cal, protein } = computeComboNutrition(combo)
+    const rightWrap = createModalMetaWrap(
+      formatModalNutritionMetaHtml(cal, protein),
+      { showCheck: comboSignature(combo) === currentSig, html: true, hasEfficiency: true }
+    )
+
+    div.appendChild(textWrap)
+    div.appendChild(rightWrap)
+
+    div.onclick = ()=>{
+      applyCombo(combo)
+      closeModal("historyModal")
+    }
+
+    itemsEl.appendChild(div)
+  })
 }
 
 function hasSeenSwipeHint(type){
@@ -1606,6 +1893,7 @@ ensureMainSwipeAction()
 ensureSauce1SwipeAction()
 refreshSwipeValueFlags()
 updateSwipeHints()
+updateHistoryButton()
 
 calc()
 }
@@ -2098,6 +2386,12 @@ function showResultStats(summaryText, breakdownHtml, options = {}){
     resultEl.innerHTML =
 `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
   <div class="result-hero-stat result-hero-stat--kcal">🔥 <span id="calVal">0.0</span> kcal</div>
+  <div class="result-action-group">
+  <button id="saveComboBtn" class="result-copy-btn result-save-btn" type="button" aria-label="儲存組合 Save" title="儲存組合 Save" onclick="saveCurrentComboFromResult()">
+    <svg class="result-save-icon" viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
+      <path class="result-save-shape" d="M6.5 3.2h11c.94 0 1.7.76 1.7 1.7V20.4c0 .66-.73 1.06-1.29.7L12 17.6l-5.91 3.5c-.56.36-1.29-.04-1.29-.7V4.9c0-.94.76-1.7 1.7-1.7Z"/>
+    </svg>
+  </button>
   <button id="copyShareBtn" class="result-copy-btn" type="button" aria-label="複製結果 Copy result" title="複製結果 Copy result" onclick="copyResultSummary()">
     <span class="copy-icon-stack" aria-hidden="true">
       <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
@@ -2111,6 +2405,7 @@ function showResultStats(summaryText, breakdownHtml, options = {}){
       </svg>
     </span>
   </button>
+  </div>
 </div>
 <div class="result-hero-stat result-hero-stat--protein"><span id="proVal">0</span> g protein</div>
 <div class="result-summary-row">
@@ -2166,6 +2461,7 @@ function bindResultCardTap(){
   resultEl.addEventListener("click", (e)=>{
     if(resultMode !== "stats") return
     if(e.target.closest("#copyShareBtn")) return
+    if(e.target.closest("#saveComboBtn")) return
     if(e.target.closest("#detailToggleBtn")) return
     toggleResultDetails()
   })
@@ -2360,6 +2656,7 @@ lastProtein = total.protein
 lastMainForFeedback = main
 
   resultEnabled = true
+  updateSaveButtonState()
 
   if(mainChanged || !resultEl.classList.contains("is-shown")){
     triggerResultPop()
