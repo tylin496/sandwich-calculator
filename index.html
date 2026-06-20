@@ -7,11 +7,11 @@
 <title>Subway calculator</title>
 <meta name="description" content="快速估算 6 吋 Subway 潛艇堡熱量與蛋白質的非官方計算器。">
 
-<link rel="icon" href="./favicon.png" />
+<link rel="icon" href="./favicon.png" type="image/png" />
 <link rel="apple-touch-icon" href="./icon-pwa.png" />
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260520m">
+<link rel="stylesheet" href="styles.css?v=20260620a">
 </head>
 
 <body>
@@ -26,6 +26,13 @@
     <p class="app-tagline">快速估算 6 吋潛艇堡熱量與蛋白質</p>
   </div>
   <div class="top-actions">
+    <button type="button" class="icon-symbol-btn" id="historyBtn" aria-label="歷史紀錄 History" title="歷史紀錄 History" onclick="openHistory()" style="display:none;">
+      <svg class="icon-symbol-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M12 7.5V12l3 1.8"/>
+      </svg>
+    </button>
     <button type="button" class="icon-symbol-btn" aria-label="搜尋 Search" title="搜尋 Search" onclick="openQuickSearch()">
       <svg class="icon-symbol-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="11" cy="11" r="6.5"/>
@@ -146,6 +153,16 @@
     <div id="sauceItems" class="modal-items"></div>
   </div>
 </div>
+<div id="historyModal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+  <div class="sheet-panel" tabindex="-1">
+    <div class="sheet-grabber-wrap" aria-hidden="true"><div class="sheet-grabber"></div></div>
+    <div class="modal-head-row">
+      <div id="historyModalTitle" class="modal-panel-title">歷史紀錄</div>
+      <button type="button" id="historyClearBtn" class="modal-clear-btn" onclick="clearHistory()">清除 Clear</button>
+    </div>
+    <div id="historyItems" class="modal-items"></div>
+  </div>
+</div>
 <div id="quickSearchModal" class="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="quickSearchModalTitle">
   <div class="sheet-panel" tabindex="-1">
     <div class="sheet-grabber-wrap" aria-hidden="true"><div class="sheet-grabber"></div></div>
@@ -154,6 +171,6 @@
     <div id="quickSearchItems" class="modal-items"></div>
   </div>
 </div>
-<script src="app.js?v=20260520m"></script>
+<script src="app.js?v=20260620a"></script>
 </body>
 </html>
