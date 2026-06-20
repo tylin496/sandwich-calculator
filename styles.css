@@ -1487,6 +1487,10 @@ input[type="checkbox"]:active::after {
   transform: scale(1.04);
 }
 
+input[type="checkbox"]:checked:active::after {
+  transform: translateX(20px) scale(1.04);
+}
+
 input[type="checkbox"]:active {
   transform: scale(0.985);
 }
@@ -2179,8 +2183,45 @@ body.has-result {
 #mainItems > div,
 #addonItems > div,
 #sauceItems > div,
-#quickSearchItems > div {
+#quickSearchItems > div,
+#historyItems > div {
   border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.16s ease, transform 0.16s var(--ease-out-soft);
+}
+
+#mainItems > div:active,
+#addonItems > div:active,
+#sauceItems > div:active,
+#quickSearchItems > div:active,
+#historyItems > div:active {
+  background-color: var(--result-row-active);
+  transform: scale(0.985);
+}
+
+/* Staggered entry — only while the sheet is freshly opened, so search
+   re-renders (which recreate the rows on every keystroke) don't replay it. */
+.sheet-modal.just-opened .modal-items > div {
+  animation: modalItemIn 0.34s var(--ease-out-soft) backwards;
+}
+.sheet-modal.just-opened .modal-items > div:nth-child(1) { animation-delay: 0.02s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(2) { animation-delay: 0.05s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(3) { animation-delay: 0.08s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(4) { animation-delay: 0.11s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(5) { animation-delay: 0.14s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(6) { animation-delay: 0.17s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(7) { animation-delay: 0.20s; }
+.sheet-modal.just-opened .modal-items > div:nth-child(n+8) { animation-delay: 0.22s; }
+
+@keyframes modalItemIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .builder-panel .option-section {

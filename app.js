@@ -161,6 +161,13 @@ function openModal(id, focusEl = null){
   requestAnimationFrame(()=>{
     modal.classList.add("is-open")
   })
+  // Mark as freshly opened so list items get a one-time staggered entry.
+  // Removed after the stagger window so search re-renders don't replay it.
+  modal.classList.add("just-opened")
+  clearTimeout(modal._justOpenedTimer)
+  modal._justOpenedTimer = setTimeout(()=>{
+    modal.classList.remove("just-opened")
+  }, 480)
   setModalOpenState()
 
   const panel = modal.querySelector(".sheet-panel")
@@ -879,7 +886,22 @@ function removeRowWithAnimation(row, onDone){
   }
 
   closeSwipeRow(row)
+
+  // Lock the current height so we can transition the collapse — otherwise the
+  // rows below snap up abruptly the instant this one is removed from layout.
+  const startH = row.offsetHeight
+  row.style.height = startH + "px"
+  row.style.minHeight = "0px"
+  row.style.overflow = "hidden"
   row.classList.add("removing")
+  row.style.transition = "height 0.34s cubic-bezier(.20,.72,.28,1), margin 0.34s cubic-bezier(.20,.72,.28,1)"
+  // Force a reflow so the start height is committed before we collapse — the
+  // transition then runs without depending on requestAnimationFrame (which is
+  // throttled in background tabs).
+  void row.offsetWidth
+  row.style.height = "0px"
+  row.style.marginTop = "0px"
+  row.style.marginBottom = "0px"
 
   setTimeout(()=>{
     row.remove()
@@ -2351,6 +2373,14 @@ let saucePickerTarget = "sauce1"
 
 function animateNumber(el, start, end, decimals=1, duration=300) {
   if(!el) return
+  // Cancel any in-flight tween on this element so rapid recalcs don't spawn
+  // overlapping RAF loops fighting over the same textContent (jitter/flicker).
+  if(el._numRaf) cancelAnimationFrame(el._numRaf)
+  if(start === end){
+    el.textContent = end.toFixed(decimals)
+    el._numRaf = null
+    return
+  }
   let startTime = null;
   function step(timestamp) {
     if (!startTime) startTime = timestamp;
@@ -2358,9 +2388,13 @@ function animateNumber(el, start, end, decimals=1, duration=300) {
     const eased = 1 - Math.pow(1 - progress, 3);
     const value = start + (end - start) * eased;
     el.textContent = value.toFixed(decimals);
-    if (progress < 1) requestAnimationFrame(step);
+    if (progress < 1) {
+      el._numRaf = requestAnimationFrame(step);
+    } else {
+      el._numRaf = null;
+    }
   }
-  requestAnimationFrame(step);
+  el._numRaf = requestAnimationFrame(step);
 }
 
 function bumpResultStat(el){
