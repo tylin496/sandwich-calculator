@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icon-pwa.png" />
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260620b">
+<link rel="stylesheet" href="styles.css?v=20260622b">
 </head>
 
 <body>
@@ -108,16 +108,19 @@
   <div id="sauceSwipeHint" class="swipe-hint" style="display:none;">左滑刪除 Swipe to delete</div>
 </section>
 
-<div id="disclaimerDetail" class="footer-detail footer-detail-static">
-  <p class="footer-line">*潛艇堡包含小麥麵包、21g 生菜、3片番茄、3片大黃瓜、3根青椒、7g 洋蔥、三角切片起司。</p>
-  <p class="footer-line">⚠️ 本工具為非官方計算器，營養數據來源為 SUBWAY 官方營養資訊；實際餐點仍可能因門市與製作方式略有差異。</p>
-  <p class="footer-links">
-    <a href="https://subway.com.tw/GoWeb2/include/meals-nutrition.html" target="_blank" rel="noopener noreferrer" class="footer-inline-link">官方營養資訊</a>
-    <span class="footer-link-sep">｜</span>
-    <a href="https://subway.com.tw/GoWeb2/include/index.php?Page=1&Cate02=%E6%BD%9B%E8%89%87%E5%A0%A1" target="_blank" rel="noopener noreferrer" class="footer-inline-link">官方菜單</a>
-  </p>
-  <p class="footer-version">資料更新：2026-03-31</p>
-</div>
+<details id="disclaimerDetail" class="footer-detail footer-detail-static footer-collapsible">
+  <summary class="footer-summary">ⓘ 非官方估算工具・說明與資料來源</summary>
+  <div class="footer-collapsible-body">
+    <p class="footer-line">*潛艇堡包含小麥麵包、21g 生菜、3片番茄、3片大黃瓜、3根青椒、7g 洋蔥、三角切片起司。</p>
+    <p class="footer-line">⚠️ 本工具為非官方計算器，營養數據來源為 SUBWAY 官方營養資訊；實際餐點仍可能因門市與製作方式略有差異。</p>
+    <p class="footer-links">
+      <a href="https://subway.com.tw/GoWeb2/include/meals-nutrition.html" target="_blank" rel="noopener noreferrer" class="footer-inline-link">官方營養資訊</a>
+      <span class="footer-link-sep">｜</span>
+      <a href="https://subway.com.tw/GoWeb2/include/index.php?Page=1&Cate02=%E6%BD%9B%E8%89%87%E5%A0%A1" target="_blank" rel="noopener noreferrer" class="footer-inline-link">官方菜單</a>
+    </p>
+    <p class="footer-version">資料更新：2026-03-31</p>
+  </div>
+</details>
 </div>
 
 <!-- 結果 -->
@@ -171,6 +174,6 @@
     <div id="quickSearchItems" class="modal-items"></div>
   </div>
 </div>
-<script src="app.js?v=20260620b"></script>
+<script src="app.js?v=20260622b"></script>
 </body>
 </html>

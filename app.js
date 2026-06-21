@@ -116,7 +116,6 @@ const doubleMeatMap = {
   "鷹嘴豆泥餅": "鷹嘴豆泥餅(3顆)",
 }
 
-const NO_SAUCE_LABEL = "不加醬 No sauce"
 let lastShareText = ""
 let copyShareResetTimer = null
 let suppressPickerTapUntil = 0
@@ -295,9 +294,11 @@ function getPer100KcalText(protein, cal){
   return `${formatProtein(per100)} g / 100 kcal`
 }
 
+// Combo totals are an estimate — show whole numbers so the hero stat and this
+// summary line never disagree (e.g. 49 vs 49.3). Per-item lists keep 0.1 detail.
 function formatKcalProteinText(cal, protein){
-  if(protein == null || Number.isNaN(protein)) return `${formatKcal(cal)} kcal`
-  return `${formatKcal(cal)} kcal · ${formatProtein(protein)} g`
+  if(protein == null || Number.isNaN(protein)) return `${Math.round(cal)} kcal`
+  return `${Math.round(cal)} kcal · ${Math.round(protein)} g`
 }
 
 /** Modal list meta: kcal · protein on one line; g / 100 kcal efficiency on second when present. */
@@ -694,9 +695,7 @@ function renderHistoryItems(){
 
   if(!history.length){
     const empty = document.createElement("div")
-    empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
-    empty.style.color = "#8e8e93"
+    empty.className = "modal-empty-hint"
     empty.textContent = "尚無紀錄 No history yet"
     itemsEl.appendChild(empty)
     return
@@ -706,16 +705,10 @@ function renderHistoryItems(){
 
   history.forEach(combo=>{
     const div = document.createElement("div")
-    div.style.padding = "12px"
-    div.style.borderBottom = "1px solid #eee"
-    div.style.cursor = "pointer"
-    div.style.display = "flex"
-    div.style.justifyContent = "space-between"
-    div.style.alignItems = "center"
+    div.className = "modal-list-row"
 
     const textWrap = document.createElement("div")
-    textWrap.className = "modal-item-title"
-    textWrap.style.paddingRight = "10px"
+    textWrap.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(textWrap, comboZhTitle(combo), comboEnTitle(combo))
 
     const extras = document.createElement("div")
@@ -1340,18 +1333,12 @@ function renderMainItems(group){
     if(!data.main[name]) return;
 
     const div = document.createElement("div")
-    div.style.padding = "12px"
-    div.style.borderBottom = "1px solid #eee"
-    div.style.cursor = "pointer"
-    div.style.display = "flex"
-    div.style.justifyContent = "space-between"
-    div.style.alignItems = "center"
+    div.className = "modal-list-row"
 
     const en = mainNameMap[name] || ""
     const textWrap = document.createElement("div")
-    textWrap.className = "modal-item-title"
+    textWrap.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(textWrap, name, en)
-    textWrap.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(
       formatModalNutritionMetaHtml(data.main[name].cal, data.main[name].protein),
@@ -1384,9 +1371,7 @@ function renderMainItems(group){
 
   if(!showRecentShortcuts && !sortedNames.length){
     const empty = document.createElement("div")
-    empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
-    empty.style.color = "#8e8e93"
+    empty.className = "modal-empty-hint"
     empty.textContent = query ? "找不到符合的口味 No matching flavor" : "此分類目前沒有項目"
     itemsEl.appendChild(empty)
     return
@@ -1541,9 +1526,7 @@ function renderAddonItems(group){
 
   if(!showRecentShortcuts && !sortedAddonNames.length){
     const empty = document.createElement("div")
-    empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
-    empty.style.color = "#8e8e93"
+    empty.className = "modal-empty-hint"
     empty.textContent = query ? "找不到符合的加料 No matching add-ons" : "此分類目前沒有項目"
     itemsEl.appendChild(empty)
     return
@@ -1553,18 +1536,12 @@ function renderAddonItems(group){
     if(!data.addon[name]) return;
 
     const div = document.createElement("div")
-    div.style.padding = "12px"
-    div.style.borderBottom = "1px solid #eee"
-    div.style.cursor = "pointer"
-    div.style.display = "flex"
-    div.style.justifyContent = "space-between"
-    div.style.alignItems = "center"
+    div.className = "modal-list-row"
 
     const en = addonNameMap[name] || ""
     const textWrap = document.createElement("div")
-    textWrap.className = "modal-item-title"
+    textWrap.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(textWrap, name, en)
-    textWrap.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(
       formatModalNutritionMetaHtml(data.addon[name].cal, data.addon[name].protein),
@@ -1653,9 +1630,7 @@ function renderQuickSearchItems(){
 
   if(!query){
     const hint = document.createElement("div")
-    hint.style.padding = "14px 12px"
-    hint.style.fontSize = "13px"
-    hint.style.color = "#8e8e93"
+    hint.className = "modal-empty-hint"
     hint.textContent = "輸入關鍵字以搜尋口味、加料、醬料"
     itemsEl.appendChild(hint)
     return
@@ -1691,9 +1666,7 @@ function renderQuickSearchItems(){
 
   if(!mainMatches.length && !addonMatches.length && !sauceMatches.length){
     const empty = document.createElement("div")
-    empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
-    empty.style.color = "#8e8e93"
+    empty.className = "modal-empty-hint"
     empty.textContent = "找不到符合項目 No matching items"
     itemsEl.appendChild(empty)
     return
@@ -1712,18 +1685,12 @@ function renderQuickSearchItems(){
 
   const renderMainItem = (name)=>{
     const row = document.createElement("div")
-    row.style.padding = "12px"
-    row.style.borderBottom = "1px solid #eee"
-    row.style.cursor = "pointer"
-    row.style.display = "flex"
-    row.style.justifyContent = "space-between"
-    row.style.alignItems = "center"
+    row.className = "modal-list-row"
 
     const en = mainNameMap[name] || ""
     const left = document.createElement("div")
-    left.className = "modal-item-title"
+    left.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(left, name, en)
-    left.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(
       formatModalNutritionMetaHtml(data.main[name].cal, data.main[name].protein),
@@ -1754,18 +1721,12 @@ function renderQuickSearchItems(){
 
   const renderAddonItem = (name)=>{
     const row = document.createElement("div")
-    row.style.padding = "12px"
-    row.style.borderBottom = "1px solid #eee"
-    row.style.cursor = "pointer"
-    row.style.display = "flex"
-    row.style.justifyContent = "space-between"
-    row.style.alignItems = "center"
+    row.className = "modal-list-row"
 
     const en = addonNameMap[name] || ""
     const left = document.createElement("div")
-    left.className = "modal-item-title"
+    left.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(left, name, en)
-    left.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(
       formatModalNutritionMetaHtml(data.addon[name].cal, data.addon[name].protein),
@@ -1797,18 +1758,12 @@ function renderQuickSearchItems(){
 
   const renderSauceItem = (name)=>{
     const row = document.createElement("div")
-    row.style.padding = "12px"
-    row.style.borderBottom = "1px solid #eee"
-    row.style.cursor = "pointer"
-    row.style.display = "flex"
-    row.style.justifyContent = "space-between"
-    row.style.alignItems = "center"
+    row.className = "modal-list-row"
 
     const en = sauceNameMap[name] || ""
     const left = document.createElement("div")
-    left.className = "modal-item-title"
+    left.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(left, name, en)
-    left.style.paddingRight = "10px"
 
     const rightWrap = createModalMetaWrap(`${data.sauce[name].cal} kcal`, {
       showCheck: selectedSauce.has(name)
@@ -2145,26 +2100,18 @@ function renderSauceItems(){
 
   if(!showRecentShortcuts && !sortedSauceNames.length){
     const empty = document.createElement("div")
-    empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
-    empty.style.color = "#8e8e93"
+    empty.className = "modal-empty-hint"
     empty.textContent = "目前沒有可選醬料"
     itemsEl.appendChild(empty)
     return
   }
   const renderSauceItem = (name)=>{
     const div = document.createElement("div")
-    div.style.padding = "12px"
-    div.style.borderBottom = "1px solid #eee"
-    div.style.cursor = "pointer"
-    div.style.display = "flex"
-    div.style.justifyContent = "space-between"
-    div.style.alignItems = "center"
+    div.className = "modal-list-row"
     const en = sauceNameMap[name] || ""
     const textWrap = document.createElement("div")
-    textWrap.className = "modal-item-title"
+    textWrap.className = "modal-item-title modal-item-title--pad"
     setBilingualModalTitle(textWrap, name, en)
-    textWrap.style.paddingRight = "10px"
     const rightWrap = createModalMetaWrap(`${data.sauce[name].cal} kcal`, {
       showCheck: name === selectedValue
     })
@@ -2406,20 +2353,12 @@ function bumpResultStat(el){
   row.classList.add("stat-bump")
 }
 
-function showResultHint(){
-  const resultEl = document.getElementById("result")
-  if(resultMode !== "hint"){
-    resultEl.innerHTML = `<div style="font-size:14px;line-height:1.4;color:#8e8e93;font-weight:500;letter-spacing:0.01em;">可選擇醬料，或留空不加醬 Sauce is optional</div>`
-    resultMode = "hint"
-  }
-}
-
 function showResultStats(summaryText, breakdownHtml, options = {}){
   const resultEl = document.getElementById("result")
   if(resultMode !== "stats"){
     resultEl.innerHTML =
 `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-  <div class="result-hero-stat result-hero-stat--kcal">🔥 <span id="calVal">0.0</span> kcal</div>
+  <div class="result-hero-stat result-hero-stat--kcal"><svg class="result-flame-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 2c.4 3-1.3 4.6-2.8 6.2C8.6 9.9 7 11.7 7 14.2A5.8 5.8 0 0 0 18.6 15c.3-2.4-.7-4.3-1.7-5.6.2 1.2-.2 2.2-1.1 2.7.5-2.5-.2-5-1.8-7-.3 1.6-1.3 2.6-2.5 3.4C12.3 6.7 13.2 4.4 13 2Z"/></svg> <span id="calVal">0.0</span> kcal</div>
   <div class="result-action-group">
   <button id="saveComboBtn" class="result-copy-btn result-save-btn" type="button" aria-label="儲存組合 Save" title="儲存組合 Save" onclick="saveCurrentComboFromResult()">
     <svg class="result-save-icon" viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
@@ -2485,6 +2424,9 @@ function toggleResultDetails(){
     detailBtn.setAttribute("aria-expanded", resultDetailsExpanded ? "true" : "false")
   }
   if(breakdownWrap) breakdownWrap.classList.toggle("is-expanded", resultDetailsExpanded)
+  // Card height changes as the breakdown animates open/closed — re-measure
+  // across the transition so the bottom clearance tracks it.
+  ;[0, 120, 260, 440].forEach(t => setTimeout(syncResultClearance, t))
 }
 
 function bindResultCardTap(){
@@ -2523,6 +2465,40 @@ function showCopyToast(text){
   copyToastTimer = setTimeout(()=>{
     toast.classList.remove("show")
   }, 1200)
+}
+
+let undoToastTimer = null
+function showUndoToast(message, onUndo){
+  let toast = document.getElementById("undoToast")
+  if(!toast){
+    toast = document.createElement("div")
+    toast.id = "undoToast"
+    toast.className = "copy-toast copy-toast--action"
+    document.body.appendChild(toast)
+  }
+  toast.innerHTML = ""
+
+  const msg = document.createElement("span")
+  msg.textContent = message
+  toast.appendChild(msg)
+
+  const btn = document.createElement("button")
+  btn.type = "button"
+  btn.className = "copy-toast__action"
+  btn.textContent = "復原 Undo"
+  toast.appendChild(btn)
+
+  toast.classList.add("show")
+  if(undoToastTimer) clearTimeout(undoToastTimer)
+  const dismiss = ()=>{ toast.classList.remove("show") }
+  undoToastTimer = setTimeout(dismiss, 5000)
+
+  btn.onclick = ()=>{
+    clearTimeout(undoToastTimer)
+    dismiss()
+    haptic()
+    if(typeof onUndo === "function") onUndo()
+  }
 }
 
 function copyResultSummary(){
@@ -2624,8 +2600,8 @@ if(sauce1 && sauce2Visible && sauce2){
   // both sauces → each half
   total.cal += data.sauce[sauce1].cal / 2
   total.cal += data.sauce[sauce2].cal / 2
-  breakdown.push(`${sauce1}: ${data.sauce[sauce1].cal / 2} kcal`)
-  breakdown.push(`${sauce2}: ${data.sauce[sauce2].cal / 2} kcal`)
+  breakdown.push(`${sauce1}: ${formatKcal(data.sauce[sauce1].cal / 2)} kcal`)
+  breakdown.push(`${sauce2}: ${formatKcal(data.sauce[sauce2].cal / 2)} kcal`)
 } else if(sauce1){
   total.cal += data.sauce[sauce1].cal
   breakdown.push(`${sauce1}: ${data.sauce[sauce1].cal} kcal`)
@@ -2663,8 +2639,8 @@ const enSauce = sauce1
   : "No sauce"
 
 const metricLine = totalEfficiency
-  ? `${formatKcal(total.cal)} kcal | ${formatProtein(total.protein)} g | ${totalEfficiency}`
-  : `${formatKcal(total.cal)} kcal | ${formatProtein(total.protein)} g`
+  ? `${Math.round(total.cal)} kcal | ${Math.round(total.protein)} g | ${totalEfficiency}`
+  : `${Math.round(total.cal)} kcal | ${Math.round(total.protein)} g`
 const zhShareLine = `${zhMainWithAddon} | ${zhSauce}`
 const enShareLine = `${enMainWithAddon} | ${enSauce}`
 
@@ -2676,7 +2652,7 @@ ${enShareLine}`
 const calEl = document.getElementById("calVal")
 const proEl = document.getElementById("proVal")
 
-const calDecimals = (Math.round(total.cal * 10) % 10 === 0) ? 0 : 1
+const calDecimals = 0
 const calChanged = Math.abs(total.cal - lastCal) > 0.05
 const proteinChanged = Math.abs(total.protein - lastProtein) > 0.05
 
@@ -2839,14 +2815,30 @@ function updateResultVisibility(){
   resultEl?.classList.add("is-shown")
   shell?.classList.add("has-result")
   document.body.classList.add("has-result")
+  syncResultClearance()
 }
 
+// Reserve exactly as much bottom space as the fixed result card occupies (card
+// height + its bottom offset + breathing room) so content never hides behind it.
+function syncResultClearance(){
+  const resultEl = document.getElementById("result")
+  if(!resultEl) return
+  if(!document.body.classList.contains("has-result")){
+    document.body.style.removeProperty("--result-clearance")
+    return
+  }
+  requestAnimationFrame(()=>{
+    const h = resultEl.getBoundingClientRect().height
+    if(h > 0) document.body.style.setProperty("--result-clearance", `${Math.round(h + 40)}px`)
+  })
+}
+
+
+window.addEventListener("resize", syncResultClearance)
 
 window.addEventListener("scroll", () => {
   const logo = document.querySelector(".logo")
   const y = window.scrollY
-
-  updateResultVisibility()
 
   if(y > 10){
     logo.style.transform = "scale(0.95)"
@@ -2858,6 +2850,9 @@ window.addEventListener("scroll", () => {
 })
 
 function resetAll(){
+  // Snapshot what's being cleared so a mis-tap is recoverable.
+  const prevCombo = getCurrentCombo()
+
   document.body.classList.add("resetting")
   setTimeout(()=> document.body.classList.remove("resetting"), 360)
   const resetBtn = document.querySelector(".reset-btn")
@@ -2894,4 +2889,11 @@ function resetAll(){
   updateAddonUI()
   updateSectionClearButtons()
   calc()
+
+  if(prevCombo){
+    showUndoToast("已重設 Reset", ()=>{
+      applyCombo(prevCombo)
+      showCopyToast("已復原 Restored")
+    })
+  }
 }
