@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icon-pwa.png" />
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260620b">
+<link rel="stylesheet" href="styles.css?v=20260624b">
 </head>
 
 <body>
@@ -47,6 +47,35 @@
     </button>
   </div>
 </header>
+
+<div class="hero-result" id="heroResult">
+  <div class="hero-empty-state" id="heroEmptyState">選擇主餐以計算熱量</div>
+  <div class="hero-stats" id="heroStats" style="display:none;">
+    <div class="hero-numbers">
+      <div class="hero-cal-row">
+        <span class="hero-cal-val" id="heroCalVal">0</span><span class="hero-cal-unit">kcal</span>
+      </div>
+      <div class="hero-protein-row">
+        <span class="hero-protein-val" id="heroProVal">0</span><span class="hero-protein-label">g 蛋白質</span><span class="hero-efficiency" id="heroEfficiency"></span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button id="copyShareBtn" class="hero-action-btn hero-action-btn--primary" type="button" aria-label="複製" title="複製" onclick="copyResultSummary()">
+        <svg class="hero-btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="hero-btn-text">複製</span>
+      </button>
+      <button id="saveComboBtn" class="hero-action-btn result-save-btn" type="button" aria-label="收藏" title="收藏" onclick="saveCurrentComboFromResult()">
+        <svg class="hero-btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path class="hero-heart-path" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span class="hero-btn-text">收藏</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <div class="builder-panel">
 
@@ -171,6 +200,6 @@
     <div id="quickSearchItems" class="modal-items"></div>
   </div>
 </div>
-<script src="app.js?v=20260620b"></script>
+<script src="app.js?v=20260624b"></script>
 </body>
 </html>

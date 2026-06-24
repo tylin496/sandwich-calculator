@@ -558,7 +558,9 @@ function updateSaveButtonState(){
   btn.disabled = !hasCombo
   const saved = hasCombo && isCurrentComboSaved()
   btn.classList.toggle("saved", saved)
-  const label = saved ? "已儲存 Saved" : "儲存組合 Save"
+  const textEl = btn.querySelector(".hero-btn-text")
+  if(textEl) textEl.textContent = saved ? "已收藏" : "收藏"
+  const label = saved ? "已收藏" : "收藏"
   btn.setAttribute("aria-label", label)
   btn.setAttribute("title", label)
 }
@@ -2415,98 +2417,19 @@ function showResultHint(){
 }
 
 function showResultStats(summaryText, breakdownHtml, options = {}){
-  const resultEl = document.getElementById("result")
-  if(resultMode !== "stats"){
-    resultEl.innerHTML =
-`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-  <div class="result-hero-stat result-hero-stat--kcal">🔥 <span id="calVal">0.0</span> kcal</div>
-  <div class="result-action-group">
-  <button id="saveComboBtn" class="result-copy-btn result-save-btn" type="button" aria-label="儲存組合 Save" title="儲存組合 Save" onclick="saveCurrentComboFromResult()">
-    <svg class="result-save-icon" viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-      <path class="result-save-shape" d="M6.5 3.2h11c.94 0 1.7.76 1.7 1.7V20.4c0 .66-.73 1.06-1.29.7L12 17.6l-5.91 3.5c-.56.36-1.29-.04-1.29-.7V4.9c0-.94.76-1.7 1.7-1.7Z"/>
-    </svg>
-  </button>
-  <button id="copyShareBtn" class="result-copy-btn" type="button" aria-label="複製結果 Copy result" title="複製結果 Copy result" onclick="copyResultSummary()">
-    <span class="copy-icon-stack" aria-hidden="true">
-      <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-        <path fill="currentColor" d="M12.5 2.5h5.2L22 6.8v10.1c0 1.44-1.16 2.6-2.6 2.6h-4.7v-2.2h4.3c.44 0 .8-.36.8-.8V8.3h-3.7c-.88 0-1.6-.72-1.6-1.6V3.9h-2c-.44 0-.8.36-.8.8v1.1h-2.2V5.1c0-1.43 1.17-2.6 2.6-2.6Z"/>
-        <path fill="currentColor" d="M6.2 6.5h6.9L17 10.4v9.5c0 1.44-1.16 2.6-2.6 2.6H6.2A2.6 2.6 0 0 1 3.6 20V9.1c0-1.43 1.17-2.6 2.6-2.6Zm5.7 2.2v2.7c0 .88.72 1.6 1.6 1.6h2.3L11.9 8.7Z"/>
-      </svg>
-    </span>
-    <span class="copy-icon-check" aria-hidden="true">
-      <svg viewBox="0 0 24 24" role="img" aria-hidden="true" focusable="false">
-        <path fill="currentColor" d="M9.55 17.35 4.4 12.2l1.5-1.5 3.65 3.65 9.05-9.05 1.5 1.5-10.55 10.55Z"/>
-      </svg>
-    </span>
-  </button>
-  </div>
-</div>
-<div class="result-hero-stat result-hero-stat--protein"><span id="proVal">0</span> g protein</div>
-<div class="result-summary-row">
-  <button id="detailToggleBtn" class="result-detail-btn result-summary-toggle" type="button" aria-label="詳細 Details" title="詳細 Details" aria-expanded="false" onclick="toggleResultDetails()">
-    <span id="summaryLine" class="result-summary-text"></span>
-    <span class="result-detail-icon" aria-hidden="true">⌄</span>
-  </button>
-</div>
-<div id="breakdownWrap" class="result-breakdown-wrap">
-  <div class="result-breakdown-inner">
-    <div id="breakdownLine" class="result-breakdown-line"></div>
-  </div>
-</div>`
-    resultMode = "stats"
-    resultDetailsExpanded = false
-  }
-
-  const summaryEl = document.getElementById("summaryLine")
-  const breakdownEl = document.getElementById("breakdownLine")
-  const detailBtn = document.getElementById("detailToggleBtn")
-  const breakdownWrap = document.getElementById("breakdownWrap")
-  if(summaryEl){
-    if(options.summaryHtml){
-      summaryEl.innerHTML = summaryText
-    } else {
-      summaryEl.textContent = summaryText
-    }
-  }
-  if(breakdownEl) breakdownEl.innerHTML = breakdownHtml
-  if(detailBtn){
-    detailBtn.classList.toggle("expanded", resultDetailsExpanded)
-    detailBtn.setAttribute("aria-expanded", resultDetailsExpanded ? "true" : "false")
-  }
-  if(breakdownWrap) breakdownWrap.classList.toggle("is-expanded", resultDetailsExpanded)
+  resultMode = "stats"
 }
 
 function toggleResultDetails(){
-  resultDetailsExpanded = !resultDetailsExpanded
-  const detailBtn = document.getElementById("detailToggleBtn")
-  const breakdownWrap = document.getElementById("breakdownWrap")
-  if(detailBtn){
-    detailBtn.classList.toggle("expanded", resultDetailsExpanded)
-    detailBtn.setAttribute("aria-expanded", resultDetailsExpanded ? "true" : "false")
-  }
-  if(breakdownWrap) breakdownWrap.classList.toggle("is-expanded", resultDetailsExpanded)
+  // breakdown removed — action bar has no expandable section
 }
 
 function bindResultCardTap(){
-  const resultEl = document.getElementById("result")
-  if(!resultEl || resultEl.dataset.tapBound === "1") return
-  resultEl.dataset.tapBound = "1"
-
-  resultEl.addEventListener("click", (e)=>{
-    if(resultMode !== "stats") return
-    if(e.target.closest("#copyShareBtn")) return
-    if(e.target.closest("#saveComboBtn")) return
-    if(e.target.closest("#detailToggleBtn")) return
-    toggleResultDetails()
-  })
+  // no-op: action bar has dedicated buttons only
 }
 
 function triggerResultPop(){
-  const resultEl = document.getElementById("result")
-  if(!resultEl) return
-  resultEl.classList.remove("pop")
-  void resultEl.offsetWidth
-  resultEl.classList.add("pop")
+  // sticky result card removed
 }
 
 function showCopyToast(text){
@@ -2536,11 +2459,14 @@ function copyResultSummary(){
     btn.classList.add("copied")
     btn.setAttribute("aria-label", copiedAria)
     btn.setAttribute("title", copiedAria)
+    const textEl = btn.querySelector(".hero-btn-text")
+    if(textEl) textEl.textContent = "已複製"
     if(copyShareResetTimer) clearTimeout(copyShareResetTimer)
     copyShareResetTimer = setTimeout(()=>{
       btn.classList.remove("copied")
       btn.setAttribute("aria-label", defaultAria)
       btn.setAttribute("title", defaultAria)
+      if(textEl) textEl.textContent = "複製"
     }, 1800)
   }
 
@@ -2581,6 +2507,10 @@ let main = document.getElementById("main").value
   if(resultEl){
     resultEl.classList.remove("is-shown", "pop")
   }
+  const heroStats = document.getElementById("heroStats")
+  const heroEmpty = document.getElementById("heroEmptyState")
+  if(heroStats) heroStats.style.display = "none"
+  if(heroEmpty) heroEmpty.style.display = ""
   updateResultVisibility()
   return
 }
@@ -2638,7 +2568,7 @@ const totalEfficiency = getPer100KcalText(total.protein, total.cal)
 const countsSummary = `主餐 ${mainPortions} 份 + 加料 ${selectedAddonNames.length} 份 + 醬料 ${selectedSauceCount} 種`
 const nutritionSummaryHtml = formatNutritionSummaryHtml(total.cal, total.protein)
 const summaryHtml = `${escapeHtml(countsSummary)} · ${nutritionSummaryHtml}`
-showResultStats(summaryHtml, breakdown.join("<br>"), { summaryHtml: true })
+showResultStats(summaryHtml, breakdown.join("<br>"), { summaryHtml: true, cal: total.cal, protein: total.protein })
 const mainChanged = main !== lastMainForFeedback
 
 const sauceShareText = []
@@ -2684,6 +2614,18 @@ animateNumber(calEl, lastCal, total.cal, calDecimals)
 animateNumber(proEl, lastProtein, total.protein, 0)
 if(calChanged) bumpResultStat(calEl)
 if(proteinChanged) bumpResultStat(proEl)
+
+// Hero result
+const heroStats = document.getElementById("heroStats")
+const heroEmpty = document.getElementById("heroEmptyState")
+const heroCalEl = document.getElementById("heroCalVal")
+const heroProEl = document.getElementById("heroProVal")
+const heroEffEl = document.getElementById("heroEfficiency")
+if(heroStats) heroStats.style.display = ""
+if(heroEmpty) heroEmpty.style.display = "none"
+animateNumber(heroCalEl, lastCal, total.cal, calDecimals)
+animateNumber(heroProEl, lastProtein, total.protein, 0)
+if(heroEffEl) heroEffEl.textContent = totalEfficiency ? `· ${totalEfficiency}` : ""
 
 lastCal = total.cal
 lastProtein = total.protein
@@ -2826,19 +2768,7 @@ ensureSauce1SwipeAction()
 initSwipeToDismiss()
 
 function updateResultVisibility(){
-  const resultEl = document.getElementById("result")
-  const shell = document.querySelector(".app-shell")
-
-  if(!resultEnabled){
-    resultEl?.classList.remove("is-shown")
-    shell?.classList.remove("has-result")
-    document.body.classList.remove("has-result")
-    return
-  }
-
-  resultEl?.classList.add("is-shown")
-  shell?.classList.add("has-result")
-  document.body.classList.add("has-result")
+  // sticky bar removed — hero handles result display
 }
 
 
