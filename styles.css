@@ -1808,35 +1808,6 @@ input[type="checkbox"]:active {
 
 }
 
-/* ── Hero skeleton ── */
-.hero-stats.hero-skeleton .hero-cal-val,
-.hero-stats.hero-skeleton .hero-protein-val {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  background: linear-gradient(
-    90deg,
-    rgba(142,142,147,0.10) 0%,
-    rgba(142,142,147,0.20) 50%,
-    rgba(142,142,147,0.10) 100%
-  ) !important;
-  background-size: 300% 100% !important;
-  border-radius: 4px !important;
-  animation: skel-shimmer 2.2s ease-in-out infinite !important;
-}
-
-.hero-stats.hero-skeleton .hero-efficiency {
-  visibility: hidden;
-}
-
-.hero-stats.hero-skeleton .hero-actions {
-  visibility: hidden;
-}
-
-@keyframes skel-shimmer {
-  0%   { background-position: -100% 0; }
-  100% { background-position:  100% 0; }
-}
-
 /* UX refresh */
 * {
   box-sizing: border-box;
