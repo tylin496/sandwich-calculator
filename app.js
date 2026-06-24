@@ -2508,9 +2508,15 @@ let main = document.getElementById("main").value
     resultEl.classList.remove("is-shown", "pop")
   }
   const heroStats = document.getElementById("heroStats")
-  const heroEmpty = document.getElementById("heroEmptyState")
-  if(heroStats) heroStats.style.display = "none"
-  if(heroEmpty) heroEmpty.style.display = ""
+  if(heroStats) {
+    heroStats.classList.add("hero-skeleton")
+    const heroCalEl = document.getElementById("heroCalVal")
+    const heroProEl = document.getElementById("heroProVal")
+    if(heroCalEl) heroCalEl.textContent = "000"
+    if(heroProEl) heroProEl.textContent = "00"
+    const heroEffEl = document.getElementById("heroEfficiency")
+    if(heroEffEl) heroEffEl.textContent = ""
+  }
   updateResultVisibility()
   return
 }
@@ -2617,12 +2623,10 @@ if(proteinChanged) bumpResultStat(proEl)
 
 // Hero result
 const heroStats = document.getElementById("heroStats")
-const heroEmpty = document.getElementById("heroEmptyState")
 const heroCalEl = document.getElementById("heroCalVal")
 const heroProEl = document.getElementById("heroProVal")
 const heroEffEl = document.getElementById("heroEfficiency")
-if(heroStats) heroStats.style.display = ""
-if(heroEmpty) heroEmpty.style.display = "none"
+if(heroStats) heroStats.classList.remove("hero-skeleton")
 animateNumber(heroCalEl, lastCal, total.cal, calDecimals)
 animateNumber(heroProEl, lastProtein, total.protein, 0)
 if(heroEffEl) heroEffEl.textContent = totalEfficiency ? `· ${totalEfficiency}` : ""
