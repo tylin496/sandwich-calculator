@@ -251,6 +251,44 @@ body.modal-open {
 
 .section-picker-top {
   margin-top: var(--space-2);
+  position: relative;
+}
+
+/* 06 Sauce split — kcal readout overlaid on the right edge of a sauce row */
+.sauce-row-kcal {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #8E8E93;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.sauce-row-kcal[hidden] {
+  display: none;
+}
+
+.sauce-half-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(52,199,89,0.12);
+  border: 1px solid rgba(52,199,89,0.3);
+  color: #1f8f44;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sauce-half-badge[hidden] {
+  display: none;
 }
 
 .section-title {
@@ -1988,6 +2026,8 @@ body {
   color: #1C1C1E;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
 }
 
 .hero-cal-unit {
@@ -1995,6 +2035,53 @@ body {
   font-weight: 500;
   color: #8E8E93;
   letter-spacing: 0;
+  display: inline-block;
+}
+
+/* 03 Odometer — one overflow-hidden window per digit, inner column scrolls via transform */
+.odo-strip {
+  display: inline-block;
+  overflow: hidden;
+  height: 1em;
+  width: 0.58em;
+  vertical-align: baseline;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.odo-strip-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.odo-col {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.75s var(--ease-spring);
+}
+
+.odo-digit-cell {
+  height: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.odo-decimal {
+  display: inline-block;
+}
+
+/* 02 Fly-in calorie pill */
+.addon-fly-pill {
+  position: fixed;
+  z-index: 11500;
+  pointer-events: none;
+  background: var(--ios-green-btn);
+  color: #fff;
+  font: 600 13px -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 5px 10px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(52,199,89,0.4);
+  white-space: nowrap;
 }
 
 .hero-protein-row {
@@ -2159,6 +2246,42 @@ body {
   content: none;
 }
 
+/* 05 Empty-state breathing — main-picker only, stops once a main is selected */
+@keyframes emptyBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.014); }
+}
+
+@keyframes plusGlow {
+  0%, 100% { text-shadow: 0 0 6px rgba(52,199,89,0.4), 0 0 14px rgba(52,199,89,0.18); opacity: 0.8; }
+  50% { text-shadow: 0 0 10px rgba(52,199,89,0.95), 0 0 26px rgba(52,199,89,0.55); opacity: 1; }
+}
+
+@keyframes shimmerSweep {
+  0% { transform: translateX(-220%) skewX(-14deg); }
+  55%, 100% { transform: translateX(480%) skewX(-14deg); }
+}
+
+#mainPicker.picker-field--placeholder {
+  animation: emptyBreathe 2.8s ease-in-out infinite;
+}
+
+#mainPicker.picker-field--placeholder.picker-field--plus::before {
+  animation: plusGlow 2.8s ease-in-out infinite;
+}
+
+#mainPicker.picker-field--placeholder::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 34%;
+  background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.75) 50%, transparent 100%);
+  animation: shimmerSweep 3.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .swipe-clear-btn {
   border-radius: 14px;
 }
@@ -2221,6 +2344,26 @@ body {
 
 .result strong {
   font-size: inherit;
+}
+
+/* 04 Sheet push-back — .app-shell is a sibling of every .sheet-modal, not an
+   ancestor, so this transform can't disturb their own position:fixed panels.
+   .top-actions/.result are fixed *inside* .app-shell though, so a transform on
+   it would become their containing block and re-anchor their fixed offsets —
+   fade them out for the duration instead of letting that happen. */
+body.modal-open .app-shell {
+  transform: scale(0.94) translateY(10px);
+  border-radius: 20px;
+  filter: brightness(0.94);
+  transform-origin: 50% 0%;
+  transition: transform var(--motion-slow) var(--ease-spring), border-radius var(--motion-slow) ease, filter var(--motion-slow) ease;
+}
+
+body.modal-open .top-actions,
+body.modal-open .result {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-fast) ease;
 }
 
 .sheet-modal {
@@ -2590,6 +2733,10 @@ body {
   .picker-field--plus::before {
     color: #5eda80;
     text-shadow: 0 0 8px rgba(94,218,128,0.75), 0 0 20px rgba(94,218,128,0.38);
+  }
+
+  #mainPicker.picker-field--placeholder::after {
+    background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.14) 50%, transparent 100%);
   }
 
   .sheet-modal {

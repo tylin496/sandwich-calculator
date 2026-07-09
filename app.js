@@ -279,6 +279,14 @@ function isDarkMode(){
   return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
 }
 
+function prefersReducedMotion(){
+  return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+}
+
+// WAAPI can't read CSS custom properties, so these mirror :root's --ease-spring / --ease-out-soft.
+const EASE_SPRING = "cubic-bezier(0.32, 0.72, 0.22, 1)"
+const EASE_OUT_SOFT = "cubic-bezier(0.22, 0.61, 0.36, 1)"
+
 function formatKcal(value){
   const rounded = Math.round(value * 10) / 10
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
@@ -574,6 +582,72 @@ function saveCurrentComboFromResult(){
     haptic()
     updateSaveButtonState()
     showCopyToast("已加入紀錄 Saved")
+    burstSaveHeart(document.getElementById("saveComboBtn"))
+  }
+}
+
+const HEART_PARTICLE_PATH = "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+const HEART_PARTICLE_COLORS = ["#34C759", "#5ec87a", "#FFC20E", "#00843D", "#8fe3a8"]
+
+function burstSaveHeart(btn, count = 14){
+  if(!btn || prefersReducedMotion()) return
+  const rect = btn.getBoundingClientRect()
+  const cx = rect.left + rect.width / 2
+  const cy = rect.top + rect.height / 2
+
+  btn.animate([
+    { transform: "scale(1)" },
+    { transform: "scale(0.86)", offset: 0.35 },
+    { transform: "scale(1.14)", offset: 0.7 },
+    { transform: "scale(1)" }
+  ], { duration: 440, easing: EASE_SPRING })
+
+  for(let i = 0; i < count; i++){
+    const isHeart = i % 3 === 0
+    const el = isHeart ? document.createElementNS("http://www.w3.org/2000/svg", "svg") : document.createElement("div")
+    const color = HEART_PARTICLE_COLORS[i % HEART_PARTICLE_COLORS.length]
+    el.style.position = "fixed"
+    el.style.left = cx + "px"
+    el.style.top = cy + "px"
+    el.style.zIndex = "11500"
+    el.style.pointerEvents = "none"
+    el.style.willChange = "transform, opacity"
+
+    if(isHeart){
+      el.setAttribute("viewBox", "0 0 24 24")
+      el.setAttribute("width", "12")
+      el.setAttribute("height", "12")
+      el.style.marginLeft = "-6px"
+      el.style.marginTop = "-6px"
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+      path.setAttribute("d", HEART_PARTICLE_PATH)
+      path.setAttribute("fill", color)
+      el.appendChild(path)
+    } else {
+      const size = 5 + Math.random() * 6
+      el.style.width = size + "px"
+      el.style.height = size + "px"
+      el.style.marginLeft = -(size / 2) + "px"
+      el.style.marginTop = -(size / 2) + "px"
+      el.style.background = color
+      el.style.borderRadius = Math.random() < 0.5 ? "50%" : "2px"
+    }
+
+    document.body.appendChild(el)
+
+    const angle = (2 * Math.PI * i / count) + (Math.random() * 0.5)
+    const distance = 34 + Math.random() * 42
+    const dx = Math.cos(angle) * distance
+    const dy = Math.sin(angle) * distance
+    const rotate = (Math.random() - 0.5) * 260
+    const duration = 640 + Math.random() * 240
+
+    const anim = el.animate([
+      { transform: "translate(0, -16px) scale(0.3) rotate(0deg)", opacity: 1 },
+      { transform: `translate(${dx}px, ${dy - 16}px) scale(1) rotate(${rotate * 0.6}deg)`, opacity: 1, offset: 0.5 },
+      { transform: `translate(${dx}px, ${dy + 34}px) scale(0.4) rotate(${rotate}deg)`, opacity: 0 }
+    ], { duration, easing: EASE_OUT_SOFT })
+    anim.onfinish = () => el.remove()
   }
 }
 
@@ -1848,6 +1922,7 @@ function renderQuickSearchItems(){
           updateSaucePickerLabel("sauce2")
           const display = sauce2Row ? sauce2Row.querySelector('[data-role="sauce-display"]') : null
           flashPickerSelection(display)
+          triggerSauceSplit()
         } else {
           const sauce2Row = document.querySelector("#sauce2List .sauce-row")
           const hidden = sauce2Row ? sauce2Row.querySelector('input[data-role="sauce-value"]') : null
@@ -2010,8 +2085,74 @@ function addAddon(defaultValue = ""){
   const addonRows = document.querySelectorAll("#addonList .addon-row")
   if(addonRows.length === 1) maybePeekHint(wrapper, "addon")
   updateAddonUI()
-  calc()
+
+  const addonKcal = data.addon[defaultValue] ? data.addon[defaultValue].cal : 0
+  if(addonKcal && !prefersReducedMotion()){
+    flyAddonKcalToHero(wrapper, addonKcal)
+    calc({ deferHero: true })
+  } else {
+    calc()
+  }
   return true
+}
+
+function flyAddonKcalToHero(rowEl, kcal){
+  const heroCalEl = document.getElementById("heroCalVal")
+  if(!heroCalEl){ return }
+  const startRect = rowEl.getBoundingClientRect()
+  const endRect = heroCalEl.getBoundingClientRect()
+  const startX = startRect.right - 10
+  const startY = startRect.top + startRect.height / 2
+  const endX = endRect.left + endRect.width / 2
+  const endY = endRect.top + endRect.height / 2
+  const dx = endX - startX
+  const dy = endY - startY
+
+  const pill = document.createElement("div")
+  pill.className = "addon-fly-pill"
+  pill.textContent = `+${formatKcal(kcal)} kcal`
+  pill.style.left = startX + "px"
+  pill.style.top = startY + "px"
+  document.body.appendChild(pill)
+
+  const anim = pill.animate([
+    { transform: "translate(0, 0) scale(0.55)", opacity: 0 },
+    { transform: `translate(${dx * 0.3}px, ${dy * 0.4 - 44}px) scale(1.06)`, opacity: 1, offset: 0.4 },
+    { transform: `translate(${dx}px, ${dy}px) scale(0.35)`, opacity: 0.85 }
+  ], { duration: 680, easing: EASE_SPRING })
+
+  anim.onfinish = () => {
+    pill.remove()
+    landHeroCalFlight()
+  }
+}
+
+function landHeroCalFlight(){
+  const flight = pendingHeroFlight
+  pendingHeroFlight = null
+  const heroCalEl = document.getElementById("heroCalVal")
+  const heroCalRow = heroCalEl ? heroCalEl.closest(".hero-cal-row") : null
+  if(!flight || !heroCalEl) return
+
+  renderHeroCalOdometer(heroCalEl, flight.total.cal, flight.calDecimals)
+
+  if(prefersReducedMotion()) return
+
+  if(heroCalRow){
+    heroCalRow.style.transformOrigin = "left bottom"
+    heroCalRow.animate([
+      { transform: "scale(1)" },
+      { transform: "scale(1.07)", offset: 0.35 },
+      { transform: "scale(1)" }
+    ], { duration: 420, easing: EASE_SPRING })
+  }
+
+  const flashColor = isDarkMode() ? "#F2F2F7" : "#1C1C1E"
+  heroCalEl.animate([
+    { color: flashColor },
+    { color: "#34C759", offset: 0.3 },
+    { color: flashColor }
+  ], { duration: 700, easing: "ease-out" })
 }
 
 function updateAddonUI(){
@@ -2063,6 +2204,82 @@ function updateSauce2Visibility(){
   updateSwipeHints()
 }
 
+function getSauceSplitState(){
+  const sauce1Value = document.getElementById("sauce1").value
+  const sauce2Input = document.querySelector('#sauce2List input[data-role="sauce-value"]')
+  const sauce2Value = sauce2Input ? sauce2Input.value : ""
+  const both = !!(sauce1Value && sauce2Value && data.sauce[sauce1Value] && data.sauce[sauce2Value])
+  return {
+    sauce1Value, sauce2Value, both,
+    sauce1Kcal: sauce1Value && data.sauce[sauce1Value] ? data.sauce[sauce1Value].cal / (both ? 2 : 1) : null,
+    sauce2Kcal: sauce2Value && data.sauce[sauce2Value] ? data.sauce[sauce2Value].cal / (both ? 2 : 1) : null
+  }
+}
+
+function setSauceKcalDisplay(rowEl, kcal, showHalfBadge, animateFrom){
+  if(!rowEl) return
+  const kcalEl = rowEl.querySelector('[data-role="sauce-kcal"]')
+  if(!kcalEl) return
+  const numEl = kcalEl.querySelector('[data-role="sauce-kcal-num"]')
+  const badgeEl = kcalEl.querySelector('[data-role="sauce-half-badge"]')
+  if(kcal == null){
+    kcalEl.hidden = true
+    if(badgeEl) badgeEl.hidden = true
+    return
+  }
+  kcalEl.hidden = false
+  if(numEl){
+    if(animateFrom != null){
+      animateNumber(numEl, animateFrom, kcal, kcal % 1 !== 0 ? 1 : 0)
+    } else {
+      numEl.textContent = formatKcal(kcal)
+    }
+  }
+  if(badgeEl) badgeEl.hidden = !showHalfBadge
+}
+
+function refreshSauceKcalDisplays(){
+  const state = getSauceSplitState()
+  setSauceKcalDisplay(document.getElementById("sauce1Row"), state.sauce1Kcal, state.both)
+  setSauceKcalDisplay(document.querySelector("#sauce2List .sauce-row"), state.sauce2Kcal, state.both)
+}
+
+function triggerSauceSplit(){
+  const state = getSauceSplitState()
+  if(!state.both) return
+  const sauce1Row = document.getElementById("sauce1Row")
+  const sauce2Row = document.querySelector("#sauce2List .sauce-row")
+
+  setSauceKcalDisplay(sauce1Row, state.sauce1Kcal, true, data.sauce[state.sauce1Value].cal)
+  setSauceKcalDisplay(sauce2Row, state.sauce2Kcal, true, data.sauce[state.sauce2Value].cal)
+
+  if(prefersReducedMotion()) return
+
+  const badgeKeyframes = [
+    { transform: "scale(0) rotate(-90deg)", opacity: 0 },
+    { transform: "scale(1.3) rotate(8deg)", opacity: 1, offset: 0.6 },
+    { transform: "scale(1) rotate(0deg)", opacity: 1 }
+  ]
+  const badge1 = sauce1Row ? sauce1Row.querySelector('[data-role="sauce-half-badge"]') : null
+  const badge2 = sauce2Row ? sauce2Row.querySelector('[data-role="sauce-half-badge"]') : null
+  if(badge1) badge1.animate(badgeKeyframes, { duration: 460, easing: EASE_SPRING })
+  if(badge2){
+    setTimeout(()=> badge2.animate(badgeKeyframes, { duration: 460, easing: EASE_SPRING }), 100)
+  }
+
+  const seesawKeyframes = (deg)=>[
+    { transform: "rotate(0deg)" },
+    { transform: `rotate(${deg}deg)`, offset: 0.35 },
+    { transform: "rotate(0deg)" }
+  ]
+  if(sauce1Row){
+    sauce1Row.animate(seesawKeyframes(-0.7), { duration: 500, easing: EASE_SPRING })
+  }
+  if(sauce2Row){
+    sauce2Row.animate(seesawKeyframes(0.7), { duration: 500, easing: EASE_SPRING })
+  }
+}
+
 function updateSaucePickerLabel(target = "sauce1"){
   if(target === "sauce1"){
     const picker = document.getElementById("sauce1Picker")
@@ -2083,6 +2300,7 @@ function updateSaucePickerLabel(target = "sauce1"){
     }
     updateSauce2Visibility()
     refreshSwipeValueFlags()
+    refreshSauceKcalDisplays()
     return
   }
 
@@ -2109,6 +2327,7 @@ function updateSaucePickerLabel(target = "sauce1"){
   updateSectionClearButtons()
   refreshSwipeValueFlags()
   updateSwipeHints()
+  refreshSauceKcalDisplays()
 }
 
 
@@ -2180,11 +2399,13 @@ function renderSauceItems(){
 
     div.onclick = ()=>{
       if(isBlocked(name) || name === selectedValue) return
+      let sauce2WasEmpty = false
       if(target === "sauce1"){
         document.getElementById("sauce1").value = name
       } else {
         const row = document.querySelector("#sauce2List .sauce-row")
         const hidden = row ? row.querySelector('input[data-role="sauce-value"]') : null
+        sauce2WasEmpty = !!(hidden && !hidden.value)
         if(hidden) hidden.value = name
       }
       saveRecentItem("sauce", name)
@@ -2194,6 +2415,7 @@ function renderSauceItems(){
           ? document.getElementById("sauce1Picker")
           : document.querySelector("#sauce2List .sauce-row [data-role='sauce-display']")
       )
+      if(target === "sauce2" && sauce2WasEmpty) triggerSauceSplit()
       closeModal("sauceModal")
       calc()
     }
@@ -2208,11 +2430,13 @@ function renderSauceItems(){
       (name)=> name,
       (name)=>{
         if(isBlocked(name)) return
+        let sauce2WasEmpty = false
         if(target === "sauce1"){
           document.getElementById("sauce1").value = name
         } else {
           const row = document.querySelector("#sauce2List .sauce-row")
           const hidden = row ? row.querySelector('input[data-role="sauce-value"]') : null
+          sauce2WasEmpty = !!(hidden && !hidden.value)
           if(hidden) hidden.value = name
         }
         saveRecentItem("sauce", name)
@@ -2222,6 +2446,7 @@ function renderSauceItems(){
             ? document.getElementById("sauce1Picker")
             : document.querySelector("#sauce2List .sauce-row [data-role='sauce-display']")
         )
+        if(target === "sauce2" && sauce2WasEmpty) triggerSauceSplit()
         closeModal("sauceModal")
         calc()
       }
@@ -2260,7 +2485,24 @@ function createSauceSelect(){
   hiddenValue.dataset.role = "sauce-value"
   hiddenValue.value = ""
 
+  const kcalEl = document.createElement("span")
+  kcalEl.className = "sauce-row-kcal"
+  kcalEl.dataset.role = "sauce-kcal"
+  kcalEl.hidden = true
+  const kcalNumEl = document.createElement("span")
+  kcalNumEl.dataset.role = "sauce-kcal-num"
+  kcalNumEl.textContent = "0"
+  const halfBadgeEl = document.createElement("span")
+  halfBadgeEl.className = "sauce-half-badge"
+  halfBadgeEl.dataset.role = "sauce-half-badge"
+  halfBadgeEl.hidden = true
+  halfBadgeEl.textContent = "½"
+  kcalEl.appendChild(kcalNumEl)
+  kcalEl.appendChild(document.createTextNode(" kcal"))
+  kcalEl.appendChild(halfBadgeEl)
+
   wrapper.appendChild(display)
+  wrapper.appendChild(kcalEl)
   wrapper.appendChild(hiddenValue)
   const actionBtn = document.createElement("button")
   actionBtn.type = "button"
@@ -2269,8 +2511,22 @@ function createSauceSelect(){
   actionBtn.textContent = "Delete"
   wrapper.appendChild(actionBtn)
   attachSwipeToReveal(wrapper, ()=>{
+    const state = getSauceSplitState()
+    const wasSplit = state.both
+    if(wasSplit && !prefersReducedMotion()){
+      const sauce1Badge = document.querySelector('#sauce1Row [data-role="sauce-half-badge"]')
+      if(sauce1Badge){
+        sauce1Badge.animate([
+          { transform: "scale(1) rotate(0deg)", opacity: 1 },
+          { transform: "scale(0) rotate(-90deg)", opacity: 0 }
+        ], { duration: 180, easing: EASE_SPRING })
+      }
+    }
     removeRowWithAnimation(wrapper, ()=>{
       updateSauce2Visibility()
+      if(wasSplit && state.sauce1Value && data.sauce[state.sauce1Value]){
+        setSauceKcalDisplay(document.getElementById("sauce1Row"), data.sauce[state.sauce1Value].cal, false, state.sauce1Kcal)
+      }
       calc()
     })
   }, ()=> !!hiddenValue.value)
@@ -2367,6 +2623,7 @@ function updateSectionClearButtons(){
 
 let lastCal = 0;
 let lastProtein = 0;
+let pendingHeroFlight = null;
 let resultEnabled = false;
 let resultMode = "";
 let resultDetailsExpanded = false;
@@ -2491,7 +2748,76 @@ function copyResultSummary(){
   document.body.removeChild(ta)
 }
 
-function calc(){
+function buildOdometerColumn(){
+  const col = document.createElement("span")
+  col.className = "odo-col"
+  for(let d = 0; d <= 9; d++){
+    const cell = document.createElement("span")
+    cell.className = "odo-digit-cell"
+    cell.textContent = String(d)
+    col.appendChild(cell)
+  }
+  return col
+}
+
+function renderHeroCalOdometer(el, value, decimals){
+  if(!el) return
+  const reduced = prefersReducedMotion()
+  const formatted = value.toFixed(decimals)
+  const dotIndex = formatted.indexOf(".")
+  const intPart = dotIndex === -1 ? formatted : formatted.slice(0, dotIndex)
+  const decPart = dotIndex === -1 ? "" : formatted.slice(dotIndex)
+
+  let cols = el._odoCols
+  const isRebuild = !cols || cols.length !== intPart.length
+
+  if(isRebuild){
+    const hadPrevious = !!cols
+    el.innerHTML = ""
+    cols = []
+    for(let i = 0; i < intPart.length; i++){
+      const strip = document.createElement("span")
+      strip.className = "odo-strip"
+      const col = buildOdometerColumn()
+      col.style.transitionDelay = reduced ? "0ms" : `${i * 70}ms`
+      strip.appendChild(col)
+      if(hadPrevious){
+        strip.classList.add("odo-strip-enter")
+        requestAnimationFrame(()=>{ strip.classList.remove("odo-strip-enter") })
+      }
+      el.appendChild(strip)
+      cols.push(col)
+    }
+    const decEl = document.createElement("span")
+    decEl.className = "odo-decimal"
+    el.appendChild(decEl)
+    el._odoDecimalEl = decEl
+    el._odoCols = cols
+  }
+
+  cols.forEach((col, i)=>{
+    const digit = Number(intPart[i])
+    col.style.transform = `translateY(${-digit * 56}px)`
+  })
+  if(el._odoDecimalEl) el._odoDecimalEl.textContent = decPart
+
+  if(!reduced){
+    const unitEl = el.parentElement ? el.parentElement.querySelector(".hero-cal-unit") : null
+    if(unitEl){
+      clearTimeout(unitEl._odoShakeTimer)
+      unitEl._odoShakeTimer = setTimeout(()=>{
+        unitEl.animate([
+          { transform: "rotate(0deg)" },
+          { transform: "rotate(-8deg)", offset: 0.4 },
+          { transform: "rotate(5deg)", offset: 0.75 },
+          { transform: "rotate(0deg)" }
+        ], { duration: 520, easing: EASE_SPRING })
+      }, 380)
+    }
+  }
+}
+
+function calc(opts = {}){
 let total = {cal:0, protein:0}
 let breakdown = []
 const resultEl = document.getElementById("result")
@@ -2623,7 +2949,11 @@ const heroProEl = document.getElementById("heroProVal")
 const heroEffEl = document.getElementById("heroEfficiency")
 if(heroStats) heroStats.style.display = ""
 if(heroEmpty) heroEmpty.style.display = "none"
-animateNumber(heroCalEl, lastCal, total.cal, calDecimals)
+if(opts.deferHero){
+  pendingHeroFlight = { prevCal: lastCal, total, calDecimals }
+} else {
+  renderHeroCalOdometer(heroCalEl, total.cal, calDecimals)
+}
 animateNumber(heroProEl, lastProtein, total.protein, 0)
 if(heroEffEl) heroEffEl.textContent = totalEfficiency ? `· ${totalEfficiency}` : ""
 
