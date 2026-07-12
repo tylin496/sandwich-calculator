@@ -1455,6 +1455,7 @@ input[type="checkbox"]:active {
   width: 100%;
   max-width: 1020px;
   margin: 0 auto;
+  transition: transform var(--motion-slow) var(--ease-spring), border-radius var(--motion-slow) ease, filter var(--motion-slow) ease;
 }
 
 .app-header {
@@ -1875,7 +1876,6 @@ body.modal-open .app-shell {
   border-radius: 20px;
   filter: brightness(0.94);
   transform-origin: 50% 0%;
-  transition: transform var(--motion-slow) var(--ease-spring), border-radius var(--motion-slow) ease, filter var(--motion-slow) ease;
 }
 
 body.modal-open .top-actions,
