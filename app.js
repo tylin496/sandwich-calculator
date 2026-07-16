@@ -139,7 +139,9 @@ const SWIPE_HINT_KEYS = {
 const MODAL_IDS = ["mainModal", "addonModal", "sauceModal", "quickSearchModal", "historyModal"]
 const HISTORY_KEY = "combo_history"
 const HISTORY_LIMIT = 8
-const MODAL_ANIM_MS = 340
+// Must cover the sheet's transform transition (--motion-slow = 0.42s) —
+// hiding the modal earlier truncates the slide-out and the panel snaps away.
+const MODAL_ANIM_MS = 440
 
 function setModalOpenState(){
   const hasOpenModal = MODAL_IDS.some(id => {
@@ -147,6 +149,10 @@ function setModalOpenState(){
     return modal && (modal.classList.contains("is-open") || modal.style.display === "block")
   })
   document.body.classList.toggle("modal-open", hasOpenModal)
+  // html is the real page scroller (html{overflow-x:hidden} blocks body
+  // overflow propagation), so lock it too — otherwise the page can still
+  // scroll behind an open sheet and the content jumps around.
+  document.documentElement.classList.toggle("modal-open", hasOpenModal)
 }
 
 function openModal(id, focusEl = null){
@@ -914,6 +920,38 @@ function animateRowEnter(el){
   void el.offsetWidth
   el.classList.add("row-enter")
   setTimeout(()=> el.classList.remove("row-enter"), 300)
+}
+
+// Height-expand a freshly inserted element so content below slides down
+// instead of snapping (mirror of removeRowWithAnimation's collapse). Only
+// for net additions — don't use it when the element replaces another one.
+function animateExpandIn(el, duration = 280){
+  if(!el || prefersReducedMotion()) return
+  const targetH = el.offsetHeight
+  if(!targetH) return
+  const cs = getComputedStyle(el)
+  const marginTop = cs.marginTop
+  const marginBottom = cs.marginBottom
+  el.style.transition = "none"
+  el.style.overflow = "hidden"
+  el.style.height = "0px"
+  el.style.minHeight = "0px"
+  el.style.marginTop = "0px"
+  el.style.marginBottom = "0px"
+  void el.offsetWidth
+  el.style.transition = `height ${duration}ms cubic-bezier(.2,.7,.2,1), margin ${duration}ms cubic-bezier(.2,.7,.2,1)`
+  el.style.height = targetH + "px"
+  el.style.marginTop = marginTop
+  el.style.marginBottom = marginBottom
+  clearTimeout(el._expandTimer)
+  el._expandTimer = setTimeout(()=>{
+    el.style.transition = ""
+    el.style.overflow = ""
+    el.style.height = ""
+    el.style.minHeight = ""
+    el.style.marginTop = ""
+    el.style.marginBottom = ""
+  }, duration + 40)
 }
 
 function maybePeekHint(row, type){
@@ -2079,6 +2117,7 @@ function addAddon(defaultValue = ""){
   setAddonValue(wrapper, defaultValue)
 
   container.appendChild(wrapper)
+  animateExpandIn(wrapper)
   animateRowEnter(wrapper)
   flashPickerSelection(wrapper.querySelector(".picker-field"))
   // First addon ever — show peek hint so user discovers swipe-to-delete
@@ -2197,6 +2236,7 @@ function updateSauce2Visibility(){
   const shouldShowPlus = !hasSecondSauceRow
   emptyPicker.style.display = shouldShowPlus ? "flex" : "none"
   if(shouldShowPlus && !wasVisible){
+    animateExpandIn(emptyPicker)
     animatePickerAppear(emptyPicker)
   }
   updateSectionClearButtons()
@@ -2783,7 +2823,11 @@ function renderHeroCalOdometer(el, value, decimals){
       strip.appendChild(col)
       if(hadPrevious){
         strip.classList.add("odo-strip-enter")
-        requestAnimationFrame(()=>{ strip.classList.remove("odo-strip-enter") })
+        // Double rAF: the enter state must survive one style flush or the
+        // transition never runs and the strip pops in with no animation.
+        requestAnimationFrame(()=>{
+          requestAnimationFrame(()=>{ strip.classList.remove("odo-strip-enter") })
+        })
       }
       el.appendChild(strip)
       cols.push(col)
@@ -2830,6 +2874,7 @@ let main = document.getElementById("main").value
   lastMainForFeedback = ""
   lastCal = 0
   lastProtein = 0
+  pendingHeroFlight = null
   if(resultEl){
     resultEl.classList.remove("is-shown", "pop")
   }
@@ -2952,6 +2997,9 @@ if(heroEmpty) heroEmpty.style.display = "none"
 if(opts.deferHero){
   pendingHeroFlight = { prevCal: lastCal, total, calDecimals }
 } else {
+  // A fresh render supersedes any in-flight pill — if the stale flight landed
+  // afterwards it would snap the hero number back to an outdated total.
+  pendingHeroFlight = null
   renderHeroCalOdometer(heroCalEl, total.cal, calDecimals)
 }
 animateNumber(heroProEl, lastProtein, total.protein, 0)

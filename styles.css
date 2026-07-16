@@ -38,6 +38,16 @@
 html {
   background: var(--html-bg);
   overflow-x: hidden;
+  /* Keep the scrollbar gutter when modal-open locks scrolling, so the page
+     doesn't shift horizontally on browsers with classic scrollbars. */
+  scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
+}
+
+/* html is the page scroller (overflow-x:hidden above stops body overflow
+   from propagating to the viewport), so the scroll lock must live here. */
+html.modal-open {
+  overflow: hidden;
 }
 
 body {
@@ -95,6 +105,9 @@ body.modal-open {
   z-index: 1200;
   display: flex;
   margin: 0;
+  /* Keep the fade transition on the base rule — if it only lives in the
+     modal-open rule, closing a sheet snaps the buttons back instantly. */
+  transition: opacity var(--motion-fast) ease;
 }
 
 .icon-symbol-btn {
@@ -1497,7 +1510,9 @@ input[type="checkbox"]:active {
 /* ── Hero result ── */
 .hero-result {
   padding: 8px 0 16px;
-  min-height: 72px;
+  /* Reserve the full stats height so the whole form doesn't jump down/up
+     when the empty state swaps with the calorie readout. */
+  min-height: 115px;
   display: flex;
   align-items: flex-start;
 }
@@ -1882,7 +1897,6 @@ body.modal-open .top-actions,
 body.modal-open .result {
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--motion-fast) ease;
 }
 
 .sheet-modal {
