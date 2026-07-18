@@ -777,7 +777,7 @@ function renderHistoryItems(){
   if(!history.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
+    empty.style.fontSize = "0.8125rem"
     empty.style.color = "#8e8e93"
     empty.textContent = "尚無紀錄 No history yet"
     itemsEl.appendChild(empty)
@@ -960,9 +960,12 @@ function maybePeekHint(row, type){
   if(hasSeenSwipeHint(type)) return
   // Trigger peek after row enter animation settles
   setTimeout(() => {
+    const btn = row.querySelector('[data-role="swipe-action"]')
+    if(btn) btn.style.setProperty("--swipeShift", `${Math.max(0, row.offsetWidth - 58)}px`)
     row.classList.add("peek-hint")
     setTimeout(() => {
       row.classList.remove("peek-hint")
+      if(btn) btn.style.removeProperty("--swipeShift")
       markSwipeHintSeen(type)
       updateSwipeHints()
     }, 1600)
@@ -986,7 +989,7 @@ function closeSwipeRow(row){
   if(picker) picker.style.transform = ""
   if(actionBtn){
     actionBtn.style.opacity = ""
-    actionBtn.style.width = ""
+    actionBtn.style.removeProperty("--swipeShift")
     actionBtn.style.removeProperty("--clearLabelOpacity")
     actionBtn.style.transform = ""
   }
@@ -1037,6 +1040,15 @@ function attachSwipeToReveal(row, onSwipeAction, canSwipe){
   const actionBtn = row.querySelector('[data-role="swipe-action"]')
   if(!picker || !actionBtn) return
   const hintType = row.dataset.swipeHintType || ""
+
+  // The label counter-translates against --swipeShift, so it needs its own
+  // wrapper element inside the button.
+  if(!actionBtn.querySelector(".swipe-clear-label")){
+    const labelEl = document.createElement("span")
+    labelEl.className = "swipe-clear-label"
+    while(actionBtn.firstChild) labelEl.appendChild(actionBtn.firstChild)
+    actionBtn.appendChild(labelEl)
+  }
 
   let startX = 0
   let startY = 0
@@ -1098,9 +1110,8 @@ function attachSwipeToReveal(row, onSwipeAction, canSwipe){
     const labelOpacity = drag < 36 ? 0 : Math.min(1, (drag - 36) / 20)
 
     actionBtn.style.opacity = String(bgOpacity)
-    actionBtn.style.width = `${clearWidth}px`
+    actionBtn.style.setProperty("--swipeShift", `${Math.max(0, rowWidth - clearWidth)}px`)
     actionBtn.style.setProperty("--clearLabelOpacity", labelOpacity.toFixed(3))
-    actionBtn.style.transform = "translateX(0)"
     actionBtn.classList.toggle("swipe-commit", isCommit)
   }
 
@@ -1499,7 +1510,7 @@ function renderMainItems(group){
   if(!showRecentShortcuts && !sortedNames.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
+    empty.style.fontSize = "0.8125rem"
     empty.style.color = "#8e8e93"
     empty.textContent = query ? "找不到符合的口味 No matching flavor" : "此分類目前沒有項目"
     itemsEl.appendChild(empty)
@@ -1656,7 +1667,7 @@ function renderAddonItems(group){
   if(!showRecentShortcuts && !sortedAddonNames.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
+    empty.style.fontSize = "0.8125rem"
     empty.style.color = "#8e8e93"
     empty.textContent = query ? "找不到符合的加料 No matching add-ons" : "此分類目前沒有項目"
     itemsEl.appendChild(empty)
@@ -1768,7 +1779,7 @@ function renderQuickSearchItems(){
   if(!query){
     const hint = document.createElement("div")
     hint.style.padding = "14px 12px"
-    hint.style.fontSize = "13px"
+    hint.style.fontSize = "0.8125rem"
     hint.style.color = "#8e8e93"
     hint.textContent = "輸入關鍵字以搜尋口味、加料、醬料"
     itemsEl.appendChild(hint)
@@ -1806,7 +1817,7 @@ function renderQuickSearchItems(){
   if(!mainMatches.length && !addonMatches.length && !sauceMatches.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
+    empty.style.fontSize = "0.8125rem"
     empty.style.color = "#8e8e93"
     empty.textContent = "找不到符合項目 No matching items"
     itemsEl.appendChild(empty)
@@ -1816,7 +1827,7 @@ function renderQuickSearchItems(){
   const renderSectionTitle = (text)=>{
     const title = document.createElement("div")
     title.style.padding = "10px 12px 6px"
-    title.style.fontSize = "11px"
+    title.style.fontSize = "0.6875rem"
     title.style.fontWeight = "700"
     title.style.letterSpacing = "0.25px"
     title.style.color = "var(--kcal-muted)"
@@ -2407,7 +2418,7 @@ function renderSauceItems(){
   if(!showRecentShortcuts && !sortedSauceNames.length){
     const empty = document.createElement("div")
     empty.style.padding = "14px 12px"
-    empty.style.fontSize = "13px"
+    empty.style.fontSize = "0.8125rem"
     empty.style.color = "#8e8e93"
     empty.textContent = "目前沒有可選醬料"
     itemsEl.appendChild(empty)
@@ -2708,7 +2719,7 @@ function bumpResultStat(el){
 function showResultHint(){
   const resultEl = document.getElementById("result")
   if(resultMode !== "hint"){
-    resultEl.innerHTML = `<div style="font-size:14px;line-height:1.4;color:#8e8e93;font-weight:500;letter-spacing:0.01em;">可選擇醬料，或留空不加醬 Sauce is optional</div>`
+    resultEl.innerHTML = `<div style="font-size:0.875rem;line-height:1.4;color:#8e8e93;font-weight:500;letter-spacing:0.01em;">可選擇醬料，或留空不加醬 Sauce is optional</div>`
     resultMode = "hint"
   }
 }
@@ -3035,6 +3046,35 @@ function attachSwipeToDismiss(panel, closeFn) {
   const itemsEl = panel.querySelector(".modal-items")
   const THRESHOLD = 88, VELOCITY = 0.42
   let touchDragActive = false
+  let settleTimer = null
+
+  // Live on-screen Y offset, so a grab mid-animation continues from the
+  // presentation value instead of jumping to the logical target.
+  function currentOffsetY() {
+    const t = getComputedStyle(panel).transform
+    if (!t || t === "none") return 0
+    return new DOMMatrixReadOnly(t).m42
+  }
+
+  // Rubber-band above the resting point instead of hard-stopping at 0.
+  function withResistance(y) {
+    return y >= 0 ? y : y * 0.18
+  }
+
+  // Dismiss at (roughly) the release velocity: faster flick, shorter animation.
+  function dismissDurationMs(offsetY, vel) {
+    const remaining = Math.max(1, panel.offsetHeight * 1.1 - Math.max(0, offsetY))
+    const byVelocity = vel > 0.1 ? remaining / vel : Infinity
+    return Math.round(Math.min(260, Math.max(140, byVelocity)))
+  }
+
+  function beginDragFromPresentation() {
+    if (settleTimer) { clearTimeout(settleTimer); settleTimer = null }
+    const baseY = currentOffsetY()
+    panel.style.transition = "none"
+    if (baseY) panel.style.transform = sheetPanelTransform(`translateY(${baseY}px)`)
+    return baseY
+  }
 
   function canStartTouchDrag(target) {
     if (target.closest(".sheet-grabber-wrap")) return true
@@ -3048,11 +3088,12 @@ function attachSwipeToDismiss(panel, closeFn) {
   function startDrag(startClientY) {
     if (touchDragActive) return
     touchDragActive = true
+    const baseY = beginDragFromPresentation()
     let currentY = startClientY
-    let startTime = Date.now()
-    let isDragging = false
-
-    panel.style.transition = "none"
+    let isDragging = baseY > 0.5
+    let lastY = startClientY
+    let lastTime = Date.now()
+    let vel = 0
 
     function onMove(e) {
       currentY = e.touches[0].clientY
@@ -3063,7 +3104,11 @@ function attachSwipeToDismiss(panel, closeFn) {
         else              return
       }
       if (isDragging) e.preventDefault()
-      panel.style.transform = sheetPanelTransform(`translateY(${Math.max(0, dy)}px)`)
+      const now = Date.now()
+      vel = (currentY - lastY) / Math.max(1, now - lastTime)
+      lastY = currentY
+      lastTime = now
+      panel.style.transform = sheetPanelTransform(`translateY(${withResistance(baseY + dy)}px)`)
     }
 
     function finish() {
@@ -3071,16 +3116,17 @@ function attachSwipeToDismiss(panel, closeFn) {
       document.removeEventListener("touchend",  finish)
       document.removeEventListener("touchcancel", finish)
       touchDragActive = false
-      const dy  = currentY - startClientY
-      const vel = dy / Math.max(1, Date.now() - startTime)
-      panel.style.transition = "transform 0.26s cubic-bezier(.22,.61,.36,1)"
-      if (isDragging && (dy > THRESHOLD || vel > VELOCITY)) {
+      const offsetY = baseY + (currentY - startClientY)
+      if (isDragging && (offsetY > THRESHOLD || vel > VELOCITY)) {
+        const ms = dismissDurationMs(offsetY, vel)
+        panel.style.transition = `transform ${ms}ms cubic-bezier(.22,.61,.36,1)`
         panel.style.transform = sheetPanelTransform("translateY(110%)")
         haptic()
-        setTimeout(() => { panel.style.transform = ""; panel.style.transition = ""; closeFn() }, 260)
+        settleTimer = setTimeout(() => { panel.style.transform = ""; panel.style.transition = ""; closeFn() }, ms)
       } else {
+        panel.style.transition = "transform 0.26s cubic-bezier(.22,.61,.36,1)"
         panel.style.transform = ""
-        setTimeout(() => { panel.style.transition = "" }, 260)
+        settleTimer = setTimeout(() => { panel.style.transition = "" }, 260)
       }
     }
 
@@ -3100,21 +3146,33 @@ function attachSwipeToDismiss(panel, closeFn) {
     // Desktop mouse drag
     grabberWrap.addEventListener("mousedown", (e) => {
       e.preventDefault()
+      const baseY = beginDragFromPresentation()
       const sy = e.clientY
       let cy = e.clientY
-      panel.style.transition = "none"
-      const mm = (ev) => { cy = ev.clientY; const dy = cy - sy; if (dy > 0) panel.style.transform = sheetPanelTransform(`translateY(${dy}px)`) }
+      let lastY = sy
+      let lastTime = Date.now()
+      let vel = 0
+      const mm = (ev) => {
+        cy = ev.clientY
+        const now = Date.now()
+        vel = (cy - lastY) / Math.max(1, now - lastTime)
+        lastY = cy
+        lastTime = now
+        panel.style.transform = sheetPanelTransform(`translateY(${withResistance(baseY + (cy - sy))}px)`)
+      }
       const mu = () => {
         document.removeEventListener("mousemove", mm)
         document.removeEventListener("mouseup",   mu)
-        const dy = cy - sy
-        panel.style.transition = "transform 0.26s cubic-bezier(.22,.61,.36,1)"
-        if (dy > THRESHOLD) {
+        const offsetY = baseY + (cy - sy)
+        if (offsetY > THRESHOLD || vel > VELOCITY) {
+          const ms = dismissDurationMs(offsetY, vel)
+          panel.style.transition = `transform ${ms}ms cubic-bezier(.22,.61,.36,1)`
           panel.style.transform = sheetPanelTransform("translateY(110%)")
-          setTimeout(() => { panel.style.transform = ""; panel.style.transition = ""; closeFn() }, 260)
+          settleTimer = setTimeout(() => { panel.style.transform = ""; panel.style.transition = ""; closeFn() }, ms)
         } else {
+          panel.style.transition = "transform 0.26s cubic-bezier(.22,.61,.36,1)"
           panel.style.transform = ""
-          setTimeout(() => { panel.style.transition = "" }, 260)
+          settleTimer = setTimeout(() => { panel.style.transition = "" }, 260)
         }
       }
       document.addEventListener("mousemove", mm)
